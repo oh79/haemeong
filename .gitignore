@@ -53,8 +53,8 @@ public/ # Gatsby, Remix 등의 빌드 결과물 폴더
 .env.*
 **/.env.*
 # 단, 예시 파일은 포함시키는 것이 좋습니다. 아래 두 줄의 주석을 풀고 사용하세요.
-# !.env.example
-# !**/.env.example
+!.env.example
+!**/.env.example
 
 # OS generated files - 운영체제 자동 생성 파일
 .DS_Store

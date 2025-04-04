@@ -1,0 +1,85 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model comments {
+  id         Int       @id @default(autoincrement())
+  post_id    Int
+  user_id    Int
+  content    String    @db.Text
+  created_at DateTime? @default(now()) @db.Timestamp(0)
+  posts      posts     @relation(fields: [post_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "comments_ibfk_1")
+  users      users     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "comments_ibfk_2")
+
+  @@index([post_id], map: "post_id")
+  @@index([user_id], map: "user_id")
+}
+
+model dreams {
+  id             Int       @id @default(autoincrement())
+  user_id        Int
+  title          String    @default("나의 꿈") @db.VarChar(255)
+  dream_content  String    @db.Text
+  interpretation String?   @db.Text
+  created_at     DateTime? @default(now()) @db.Timestamp(0)
+  users          users     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "dreams_ibfk_1")
+
+  @@index([user_id], map: "user_id")
+}
+
+model likes {
+  id         Int       @id @default(autoincrement())
+  user_id    Int
+  post_id    Int
+  created_at DateTime? @default(now()) @db.Timestamp(0)
+  users      users     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "likes_ibfk_1")
+  posts      posts     @relation(fields: [post_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "likes_ibfk_2")
+
+  @@unique([user_id, post_id], map: "user_post_like")
+  @@index([post_id], map: "post_id")
+}
+
+model posts {
+  id         Int        @id @default(autoincrement())
+  user_id    Int
+  title      String     @db.VarChar(255)
+  content    String     @db.Text
+  created_at DateTime?  @default(now()) @db.Timestamp(0)
+  updated_at DateTime?  @default(now()) @db.Timestamp(0)
+  comments   comments[]
+  likes      likes[]
+  users      users      @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "posts_ibfk_1")
+  scraps     scraps[]
+
+  @@index([user_id], map: "user_id")
+}
+
+model scraps {
+  id         Int       @id @default(autoincrement())
+  user_id    Int
+  post_id    Int
+  created_at DateTime? @default(now()) @db.Timestamp(0)
+  users      users     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "scraps_ibfk_1")
+  posts      posts     @relation(fields: [post_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "scraps_ibfk_2")
+
+  @@unique([user_id, post_id], map: "user_post_scrap")
+  @@index([post_id], map: "post_id")
+}
+
+model users {
+  id         Int        @id @default(autoincrement())
+  username   String     @unique(map: "username") @db.VarChar(50)
+  email      String     @unique(map: "email") @db.VarChar(100)
+  password   String     @db.VarChar(255)
+  created_at DateTime?  @default(now()) @db.Timestamp(0)
+  comments   comments[]
+  dreams     dreams[]
+  likes      likes[]
+  posts      posts[]
+  scraps     scraps[]
+}
