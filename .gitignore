@@ -1,0 +1,100 @@
+# Logs - 로그 파일 및 디렉토리
+**/logs/
+**/*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Runtime data - 런타임 데이터 파일
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory - 코드 커버리지 리포트
+coverage/
+*.lcov
+.nyc_output/
+
+# Dependency directories - 의존성 패키지 폴더 (핵심)
+node_modules/
+**/node_modules/ # frontend/, backend/ 등 하위 폴더의 node_modules도 모두 포함
+jspm_packages/
+bower_components/
+web_modules/
+
+# Build output directories - 빌드 결과물
+dist/
+**/dist/
+build/
+**/build/
+out/
+public/ # Gatsby, Remix 등의 빌드 결과물 폴더
+.next/ # Next.js
+.nuxt/ # Nuxt.js
+.svelte-kit/ # SvelteKit
+.cache/ # Gatsby
+
+# TypeScript cache - 타입스크립트 캐시 파일
+*.tsbuildinfo
+
+# Cache files - 각종 캐시 파일
+.parcel-cache/
+.eslintcache
+.rpt2_cache/
+.rts2_cache/
+
+# Environment variables - 환경변수 파일 (매우 중요!)
+# 실제 키 값은 절대 커밋하지 마세요.
+.env
+**/.env
+.env.*
+**/.env.*
+# 단, 예시 파일은 포함시키는 것이 좋습니다. 아래 두 줄의 주석을 풀고 사용하세요.
+# !.env.example
+# !**/.env.example
+
+# OS generated files - 운영체제 자동 생성 파일
+.DS_Store
+Thumbs.db
+
+# Editor directories and files - 에디터 설정 파일
+.idea/
+.vscode/*
+# 단, 공유하면 좋은 설정 파일은 제외합니다.
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.sublime-project
+*.sublime-workspace
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Misc - 기타
+*.tgz # npm pack 결과물
+.npm/ # npm 캐시
+.yarn-integrity # Yarn 무결성 파일
+.node_repl_history # Node REPL 히스토리
+
+# --- 프로젝트 특정 규칙 ---
+
+# Frontend specific ignores (frontend/.gitignore 참고)
+frontend/dist-ssr/ # 프론트엔드 특정 빌드 결과물
+frontend/*.local # 프론트엔드 특정 로컬 파일 (패턴 의미 확인 필요)
+
+# Backend specific ignores (필요시 백엔드 관련 규칙 추가)
+# 예: backend/tmp/
+
+# Lock files (의존성 버전 고정 파일)
+# 일반적으로 package-lock.json, yarn.lock, pnpm-lock.yaml 파일은 커밋하는 것을 권장합니다.
+# 만약 frontend/.gitignore 처럼 무시하려면 아래 주석을 해제하세요.
+# *.lock
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
