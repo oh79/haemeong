@@ -61,7 +61,7 @@ function MyDreams() {
   }
 
   return (
-    <Box p={5}>
+    <Box>
       <Heading as="h2" size="xl" mb={6} textAlign="center">나의 꿈 해몽 기록</Heading>
       {myDreams.length === 0 ? (
         <Text textAlign="center">아직 저장된 꿈 해몽 기록이 없습니다.</Text>

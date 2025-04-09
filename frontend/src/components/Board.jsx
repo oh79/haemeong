@@ -84,25 +84,26 @@ function Board() {
   // --------------------------
 
   return (
-    <Box>
-      <Flex justify="space-between" align="center" mb={6}> {/* mb: 아래쪽 마진 */}
-        <Heading as="h2" size="lg">게시판</Heading>
-        <Button as={RouterLink} to="/board/write" colorScheme="teal" size="sm"> {/* RouterLink와 통합 */}
+    <Box maxW="container.xl">
+      <Flex justify="space-between" align="center" mb={6} direction={{ base: 'column', sm: 'row' }}> {/* 모바일: 세로, sm 이상: 가로 */}
+        <Heading as="h2" size="lg" mb={{ base: 4, sm: 0 }}>게시판</Heading> {/* 모바일에서 하단 마진 추가 */}
+        <Button as={RouterLink} to="/board/write" colorScheme="teal" size="sm">
           새 글 작성
         </Button>
       </Flex>
 
       {/* 검색 폼 */}
       <Box as="form" onSubmit={handleSearch} mb={6}>
-        <Flex>
+        <Flex direction="row" align="center">
           <Input
             placeholder="제목 또는 내용 검색"
             value={searchTerm}
             onChange={handleSearchInputChange}
-            mr={2} // 오른쪽 마진
+            mr={{ base: 0, sm: 2 }}
             focusBorderColor="teal.400"
+            flexGrow={1}
           />
-          <Button type="submit" colorScheme="teal" px={6}> {/* px: 좌우 패딩 */}
+          <Button type="submit" colorScheme="teal" px={6} flexShrink={5} ml={{ base: 2, sm: 0 }}>
             검색
           </Button>
         </Flex>
@@ -128,8 +129,8 @@ function Board() {
             <Thead>
               <Tr>
                 <Th>제목</Th>
-                <Th isNumeric>작성자</Th>
-                <Th isNumeric>좋아요</Th>
+                <Th display={{ base: 'none', sm: 'table-cell' }}>작성자</Th>
+                <Th isNumeric display={{ base: 'none', md: 'table-cell' }}>좋아요</Th>
                 <Th isNumeric>작성일</Th>
               </Tr>
             </Thead>
@@ -142,14 +143,14 @@ function Board() {
                         {post.title}
                       </ChakraLink>
                     </Td>
-                    <Td isNumeric>{post.username}</Td>
-                    <Td isNumeric>{post.likeCount || 0}</Td>
+                    <Td display={{ base: 'none', sm: 'table-cell' }}>{post.username}</Td>
+                    <Td isNumeric display={{ base: 'none', md: 'table-cell' }}>{post.likeCount || 0}</Td>
                     <Td isNumeric>{formatDate(post.created_at)}</Td>
                   </Tr>
                 ))
               ) : (
                 <Tr>
-                  <Td colSpan={4} textAlign="center" py={10}>
+                  <Td colSpan={{ base: 2, sm: 3, md: 4 }} textAlign="center" py={10}>
                     <Text color="gray.500">
                       {currentSearch ? `'${currentSearch}'에 대한 검색 결과가 없습니다.` : '게시글이 없습니다.'}
                     </Text>

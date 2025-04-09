@@ -82,7 +82,7 @@ function Login() {
     <Box maxW="md" mx="auto" mt={10} p={8} borderWidth={1} borderRadius="lg" shadow="md">
       <Heading as="h2" size="lg" textAlign="center" mb={6}>로그인</Heading>
       <Box as="form" onSubmit={handleSubmit}>
-        <VStack spacing={4}> {/* VStack으로 폼 요소 배치 */}
+        <VStack spacing={5}> {/* VStack으로 폼 요소 배치 */}
           <FormControl id="login-username" isRequired isDisabled={loading}>
             <FormLabel>사용자 이름</FormLabel>
             <Input
@@ -106,6 +106,7 @@ function Login() {
           </FormControl>
 
           <Button
+            mt={4}
             type="submit"
             colorScheme="teal"
             width="full" // 버튼 너비 100%
@@ -119,7 +120,7 @@ function Login() {
       {/* 회원가입 링크 */}
       <Text mt={4} textAlign="center">
         계정이 없으신가요?{' '}
-        <ChakraLink as={RouterLink} to="/signup" color="teal.500">
+        <ChakraLink as={RouterLink} to="/signup" color="teal.500" fontWeight="semibold">
           회원가입
         </ChakraLink>
       </Text>

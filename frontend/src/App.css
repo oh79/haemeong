@@ -1,8 +1,6 @@
 #root {
   max-width: 1280px;
   margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
 }
 
 .logo {
@@ -44,8 +42,8 @@
 /* 예시: 화면 너비가 600px 이하일 때 적용될 스타일 */
 @media (max-width: 600px) {
   #root {
-    padding: 1rem; /* 모바일 화면에서는 패딩을 줄임 */
-    /* max-width 는 유지하거나 필요 시 조절 */
+    padding: 1rem; /* Layout 컴포넌트가 패딩을 관리하므로 제거 */
+    max-width: 1280px; /* 유지하거나 필요 시 조절 */
   }
 
   /* 기본 폰트 크기를 모바일에서 읽기 좋게 설정 (index.css 에서 body 에 설정하는 것이 더 좋을 수 있음) */
