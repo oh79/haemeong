@@ -80,7 +80,7 @@ function Signup() {
     <Box maxW="md" mx="auto" mt={10} p={8} borderWidth={1} borderRadius="lg" shadow="md">
       <Heading as="h2" size="lg" textAlign="center" mb={6}>회원가입</Heading>
       <Box as="form" onSubmit={handleSubmit}>
-        <VStack spacing={4}>
+        <VStack spacing={5}>
           <FormControl id="signup-username" isRequired isDisabled={loading}>
             <FormLabel>사용자 이름</FormLabel>
             <Input type="text" name="username" value={formData.username} onChange={handleChange} focusBorderColor="teal.400"/>
@@ -98,6 +98,7 @@ function Signup() {
           </FormControl>
 
           <Button
+            mt={4}
             type="submit"
             colorScheme="teal"
             width="full"
@@ -110,7 +111,7 @@ function Signup() {
       </Box>
       <Text mt={4} textAlign="center">
         이미 계정이 있으신가요?{' '}
-        <ChakraLink as={RouterLink} to="/login" color="teal.500">
+        <ChakraLink as={RouterLink} to="/login" color="teal.500" fontWeight="semibold">
           로그인
         </ChakraLink>
       </Text>
