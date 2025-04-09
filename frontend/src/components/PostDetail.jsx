@@ -64,7 +64,7 @@ function PostDetail() {
     setLoading(true);
     // setMessage('');
     try {
-      const response = await axios.get(`http://localhost:3001/api/posts/${postId}`);
+      const response = await axios.get(`http://localhost:5000/api/posts/${postId}`);
       setPost(response.data);
       setComments(response.data.comments || []);
       setLikeCount(response.data.likeCount || 0);
@@ -99,7 +99,7 @@ function PostDetail() {
       if (!newComment.trim()) return setCommentMessage('댓글 내용을 입력해주세요.'); // 이건 내부 메시지 유지
 
       try {
-          const response = await axios.post(`http://localhost:3001/api/posts/${postId}/comments`, {
+          const response = await axios.post(`http://localhost:5000/api/posts/${postId}/comments`, {
             content: newComment
           });
           setComments(prev => [...prev, response.data]);
@@ -127,7 +127,7 @@ function PostDetail() {
       if (!editedContent.trim()) return setEditErrorMessage('내용을 입력하세요.');
 
       try {
-          const response = await axios.put(`http://localhost:3001/api/posts/${postId}/comments/${commentId}`, {
+          const response = await axios.put(`http://localhost:5000/api/posts/${postId}/comments/${commentId}`, {
             content: editedContent
           });
           setComments(prev => prev.map(c => c.id === commentId ? response.data : c));
@@ -141,7 +141,7 @@ function PostDetail() {
   const handleDeleteComment = async (commentId) => {
       if (window.confirm('정말 이 댓글을 삭제하시겠습니까?')) {
           try {
-              await axios.delete(`http://localhost:3001/api/posts/${postId}/comments/${commentId}`);
+              await axios.delete(`http://localhost:5000/api/posts/${postId}/comments/${commentId}`);
               setComments(prev => prev.filter(c => c.id !== commentId));
               toast({ title: "댓글 삭제 완료", status: "success", duration: 1500 });
           } catch (error) {
@@ -156,7 +156,7 @@ function PostDetail() {
   const handleDeletePost = async () => {
       if (window.confirm('정말 이 게시글을 삭제하시겠습니까? 댓글도 모두 함께 삭제됩니다.')) {
           try {
-              await axios.delete(`http://localhost:3001/api/posts/${postId}`);
+              await axios.delete(`http://localhost:5000/api/posts/${postId}`);
               toast({ title: "게시글 삭제 완료", status: "success", duration: 2000 });
               navigate('/board');
           } catch (error) {
@@ -172,7 +172,7 @@ function PostDetail() {
       if (likeLoading) return;
       setLikeLoading(true);
       try {
-          const response = likedByUser ? await axios.delete(`http://localhost:3001/api/posts/${postId}/like`) : await axios.post(`http://localhost:3001/api/posts/${postId}/like`);
+          const response = likedByUser ? await axios.delete(`http://localhost:5000/api/posts/${postId}/like`) : await axios.post(`http://localhost:5000/api/posts/${postId}/like`);
           setLikedByUser(!likedByUser);
           setLikeCount(response.data.likeCount);
           // toast({ description: response.data.message, status: "info", duration: 1000 }); // 메시지는 생략해도 무방
@@ -190,7 +190,7 @@ function PostDetail() {
       if (scrapLoading) return;
       setScrapLoading(true);
       try {
-          const response = scrappedByUser ? await axios.delete(`http://localhost:3001/api/posts/${postId}/scrap`) : await axios.post(`http://localhost:3001/api/posts/${postId}/scrap`);
+          const response = scrappedByUser ? await axios.delete(`http://localhost:5000/api/posts/${postId}/scrap`) : await axios.post(`http://localhost:5000/api/posts/${postId}/scrap`);
           setScrappedByUser(!scrappedByUser);
           toast({ description: response.data.message, status: "success", duration: 1500 });
       } catch (error) {

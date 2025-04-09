@@ -12,7 +12,7 @@ const postRoutes = require('./routes/posts'); // post 라우트 가져오기 (�
 const userRoutes = require('./routes/users'); // user 라우트 가져오기 (추가)
 
 const app = express();
-const PORT = process.env.PORT || 3001; // 환경 변수에서 포트를 가져오거나 기본값 3001 사용
+const PORT = process.env.PORT || 5000; // 환경 변수에서 포트를 가져오거나 기본값 5000 사용
 
 // CORS 미들웨어 설정 (모든 출처 허용 - 개발 단계)
 // 실제 배포 시에는 프론트엔드 주소만 허용하도록 설정 변경 필요
@@ -22,8 +22,15 @@ app.use(cors());
 app.use(express.json());
 
 // 간단한 테스트 라우트
-app.get('/', (req, res) => {
+app.get('/', async (req, res) => {
   res.send('꿈 해몽 서비스 백엔드 서버');
+  try {
+    // DB 연결 확인을 위해 한 번 연결을 시도
+    const [rows, fields] = await db.query('SELECT NOW()');
+    res.json({ message: 'DB connected successfully', time: rows });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to connect to DB', details: err.message });
+  }
 });
 
 // 인증 관련 라우트 연결 (추가)
@@ -40,7 +47,7 @@ app.use('/api/posts', postRoutes);
 app.use('/api/users', userRoutes);
 
 // 서버 시작
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () =>  {
   console.log(`서버가 ${PORT}번 포트에서 실행 중입니다.`);
 });
 

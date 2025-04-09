@@ -38,7 +38,7 @@ function Board() {
     setMessage('');
     try {
       // API 호출 시 search 쿼리 파라미터 추가
-      const response = await axios.get(`http://localhost:3001/api/posts?search=${encodeURIComponent(searchQuery)}`);
+      const response = await axios.get(`http://localhost:5000/api/posts?search=${encodeURIComponent(searchQuery)}`);
       setPosts(response.data);
     } catch (error) {
       console.error('게시글 목록 로딩 오류:', error);

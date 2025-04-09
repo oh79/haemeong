@@ -20,7 +20,7 @@ function MyScraps() {
     setMessage('');
     try {
         // 백엔드 API 호출 (인증 필요, axios 기본 헤더에 토큰 포함됨)
-        const response = await axios.get('http://localhost:3001/api/posts/scraps/me');
+        const response = await axios.get('http://localhost:5000/api/posts/scraps/me');
         setScrappedPosts(response.data);
     } catch (error) {
         console.error('스크랩 목록 로딩 오류:', error);

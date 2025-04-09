@@ -72,7 +72,7 @@ function Profile() {
       return;
     }
     try {
-      const response = await axios.put('http://localhost:3001/api/users/me', { username, email });
+      const response = await axios.put('http://localhost:5000/api/users/me', { username, email });
       localStorage.setItem('userInfo', JSON.stringify(response.data.user));
       setCurrentUser(response.data.user);
       toast({ title: "정보 수정 완료", description: response.data.message, status: "success", duration: 2000 });
@@ -94,7 +94,7 @@ function Profile() {
       return;
     }
     try {
-      const response = await axios.put('http://localhost:3001/api/users/me/password', { currentPassword, newPassword });
+      const response = await axios.put('http://localhost:5000/api/users/me/password', { currentPassword, newPassword });
       toast({ title: "변경 완료", description: response.data.message, status: "success", duration: 2000 });
       setCurrentPassword(''); setNewPassword(''); setConfirmNewPassword('');
     } catch (error) {
