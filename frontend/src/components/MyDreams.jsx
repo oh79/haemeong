@@ -22,7 +22,7 @@ function MyDreams() {
           throw new Error('로그인이 필요합니다.'); // 로그인 안되어 있으면 에러
         }
 
-        const response = await axios.get('http://localhost:3001/api/dreams/my', {
+        const response = await axios.get('http://localhost:5000/api/dreams/my', {
           headers: { Authorization: `Bearer ${token}` }
         });
         setMyDreams(response.data);

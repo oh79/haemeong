@@ -1,0 +1,45 @@
+# docker-compose.yml
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    # 로컬 폴더 바인드 (개발 편의)
+    # node_modules 충돌 방지를 위해 아래처럼 마운트
+    volumes:
+      - ./frontend:/app
+      # 로컬 node_modules를 덮어씌우지 않도록 컨테이너 내부 node_modules를 익명 볼륨으로
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    # DB 연결 정보, API 키 등은 .env 파일에
+    env_file:
+      - ./backend/.env
+    environment:
+      - NODE_ENV=development
+      # 필요하다면 DATABASE_URL 등 추가
+
+  mysql:
+    image: mysql:8.0
+    ports:
+      - "3307:3306"
+    env_file:
+      - ./backend/.env
+    volumes:
+      - mysql-data:/var/lib/mysql
+
+volumes:
+  mysql-data:

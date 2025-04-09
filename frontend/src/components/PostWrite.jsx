@@ -62,7 +62,7 @@ function PostWrite() {
     }
 
     try {
-      const response = await axios.post('http://localhost:3001/api/posts', { title, content });
+      const response = await axios.post('http://localhost:5000/api/posts', { title, content });
       console.log('새 글 작성 성공:', response.data);
       toast({
           title: "작성 완료",

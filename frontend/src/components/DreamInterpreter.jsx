@@ -111,7 +111,7 @@ function DreamInterpreter() {
     setResultTitle('');
 
     try {
-      const response = await axios.post('http://localhost:3001/api/dreams', {
+      const response = await axios.post('http://localhost:5000/api/dreams', {
         title: title.trim(),
         dream_content: dreamContent
       });
