@@ -80,7 +80,7 @@ router.post('/login', async (req, res) => {
 
     // 2. 사용자 이름으로 사용자 찾기
     const [users] = await connection.query(
-      'SELECT id, username, password FROM users WHERE username = ?',
+      'SELECT id, username, email, password FROM users WHERE username = ?',
       [username]
     );
 
@@ -102,7 +102,7 @@ router.post('/login', async (req, res) => {
     // 6. 비밀번호 일치 -> JWT 생성
     const payload = { // 토큰에 담을 정보 (민감 정보 제외!)
       userId: user.id,
-      username: user.username
+      username: user.username,
     };
     const secretKey = process.env.JWT_SECRET; // .env 파일에서 비밀키 가져오기
     const options = { expiresIn: '1h' }; // 토큰 유효 시간 (예: 1시간)
@@ -117,7 +117,8 @@ router.post('/login', async (req, res) => {
       token: token, // 클라이언트에게 토큰 전달
       user: { // 사용자 정보도 함께 전달 (선택적)
         id: user.id,
-        username: user.username
+        username: user.username,
+        email: user.email
       }
     });
 
