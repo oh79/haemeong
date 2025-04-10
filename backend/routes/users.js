@@ -157,5 +157,47 @@ router.put('/me/password', authenticateToken, async (req, res) => {
     }
 });
 
+// +++ POST /api/users/me/verify-password - 현재 비밀번호 확인 +++
+router.post('/me/verify-password', authenticateToken, async (req, res) => {
+    const userId = req.user.userId;
+    const { password } = req.body;
+
+    // 1. 입력값 검증
+    if (!password) {
+        return res.status(400).json({ message: '비밀번호를 입력해주세요.' });
+    }
+
+    let connection;
+    try {
+        connection = await pool.getConnection();
+
+        // 2. 데이터베이스에서 사용자 비밀번호 조회
+        const [users] = await connection.query('SELECT password FROM users WHERE id = ?', [userId]);
+        if (users.length === 0) {
+            // 이론적으로 authenticateToken을 통과했으면 발생하기 어려움
+            return res.status(404).json({ message: '사용자를 찾을 수 없습니다.' });
+        }
+        const user = users[0];
+
+        // 3. 입력된 비밀번호와 저장된 해시 비밀번호 비교
+        const isMatch = await bcrypt.compare(password, user.password);
+
+        if (!isMatch) {
+            console.log(`사용자 ${userId} 비밀번호 확인 실패`);
+            return res.status(401).json({ message: '비밀번호가 올바르지 않습니다.' });
+        }
+
+        // 4. 비밀번호 일치 시 성공 응답
+        console.log(`사용자 ${userId} 비밀번호 확인 성공`);
+        res.status(200).json({ message: '비밀번호가 확인되었습니다.' });
+
+    } catch (error) {
+        console.error(`사용자 ${userId} 비밀번호 확인 오류:`, error);
+        res.status(500).json({ message: '서버 오류가 발생했습니다.' });
+    } finally {
+        if (connection) connection.release();
+    }
+});
+// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 module.exports = router;

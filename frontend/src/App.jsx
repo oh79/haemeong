@@ -20,6 +20,8 @@ import {
 } from '@chakra-ui/react'
 import { HamburgerIcon } from '@chakra-ui/icons'
 import Layout from './components/Layout'
+import VerifyPassword from './components/VerifyPassword'
+import EditProfile from './components/EditProfile'
 
 function Navigation() {
   const navigate = useNavigate()
@@ -179,6 +181,8 @@ function App() {
           <Route path="/my-scraps" element={<ProtectedRoute><MyScraps /></ProtectedRoute>} />
           <Route path="/my-dreams" element={<ProtectedRoute><MyDreams /></ProtectedRoute>} />
           <Route path="/dreams/:id" element={<ProtectedRoute><DreamDetail /></ProtectedRoute>} />
+          <Route path="/verify-password" element={<VerifyPassword />} />
+          <Route path="/edit-profile" element={<EditProfile />} />
         </Routes>
       </Layout>
     </Box>
