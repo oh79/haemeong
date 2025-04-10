@@ -1,0 +1,11 @@
+ms-azuretools.vscode-docker
+dbaeumer.vscode-eslint
+esbenp.prettier-vscode
+eamodio.gitlens
+burkeholland.simple-react-snippets
+waderyan.nodejs-extension-pack
+mtxr.sqltools
+mtxr.sqltools-driver-mysql
+ms-vscode-remote.remote-containers
+ritwickdey.liveserver
+formulahendry.auto-rename-tag

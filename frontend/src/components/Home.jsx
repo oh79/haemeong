@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import DreamInterpreter from './DreamInterpreter';
+import DreamInterpreter from './Dream/DreamInterpreter';
 import { Box, Heading, Text, VStack, Flex, Spacer, Button, HStack, Link as ChakraLink, SimpleGrid, Image, Card, CardBody, Stack, Divider, CardFooter, ButtonGroup } from '@chakra-ui/react';
 
 function Home() {
