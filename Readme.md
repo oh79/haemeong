@@ -9,9 +9,9 @@
 ```mermaid
 graph TD
     A[👤 사용자] --> B{🌐 웹 브라우저};
-    B --> C[⚛️ Frontend (React @ Port 3000)];
-    C -- API 요청 (HTTP) --> D[⚙️ Backend (Node.js/Express @ Port 5000)];
-    D -- DB 쿼리 --> E[🗄️ Database (MySQL @ Port 3306)];
+    B --> C["⚛️ Frontend (React @ Port 3000)"];
+    C -- API 요청 (HTTP) --> D["⚙️ Backend (Node.js/Express @ Port 5000)"];
+    D -- DB 쿼리 --> E["🗄️ Database (MySQL @ Port 3306)"];
     D -- 인증/인가 (JWT) --> C;
     D -- API 응답 --> C;
     C --> B;
@@ -39,22 +39,22 @@ graph TD
 ```mermaid
 sequenceDiagram
     participant U as 👤 사용자
-    participant FE as ⚛️ Frontend (Login.jsx)
-    participant BE as ⚙️ Backend (auth.js)
-    participant DB as 🗄️ Database (users)
+    participant FE as "⚛️ Frontend (Login.jsx)"
+    participant BE as "⚙️ Backend (auth.js)"
+    participant DB as "🗄️ Database (users)"
 
-    U->>+FE: 아이디/비밀번호 입력 후 로그인 버튼 클릭
-    FE->>+BE: POST /api/auth/login (username, password)
-    BE->>+DB: SELECT id, username, password, email FROM users WHERE username = ?
-    DB-->>-BE: 사용자 정보 (해시된 비밀번호 포함) 또는 없음
+    U->>FE: 아이디/비밀번호 입력 후 로그인 버튼 클릭
+    FE->>BE: POST /api/auth/login (username, password)
+    BE->>DB: SELECT id, username, password, email FROM users WHERE username = ?
+    DB-->>BE: 사용자 정보 (해시된 비밀번호 포함) 또는 없음
     alt 사용자 정보 없음 또는 비밀번호 불일치
-        BE-->>-FE: 로그인 실패 응답 (401 Unauthorized)
-        FE-->>-U: 로그인 실패 메시지 표시
+        BE-->>FE: 로그인 실패 응답 (401 Unauthorized)
+        FE-->>U: 로그인 실패 메시지 표시
     else 사용자 정보 있고 비밀번호 일치
         BE->>BE: JWT 생성 (userId, username, email 포함)
-        BE-->>-FE: 로그인 성공 응답 (200 OK, { token, user: {id, username, email} })
+        BE-->>FE: 로그인 성공 응답 (200 OK, { token, user: {id, username, email} })
         FE->>FE: localStorage에 authToken, userInfo 저장
-        FE-->>-U: 로그인 성공 메시지 & 홈 화면 이동
+        FE-->>U: 로그인 성공 메시지 & 홈 화면 이동
     end
 ```
 
@@ -88,7 +88,6 @@ erDiagram
         string email UK "VARCHAR(100), unique, not null"
         string password "VARCHAR(255), not null"
         datetime created_at "TIMESTAMP(0), DEFAULT CURRENT_TIMESTAMP(0)"
-        -- roles 컬럼은 스키마에 없음 (필요시 추가)
     }
 
     POSTS {
@@ -97,7 +96,7 @@ erDiagram
         string title "VARCHAR(255), not null"
         text content "TEXT, not null"
         datetime created_at "TIMESTAMP(0), DEFAULT CURRENT_TIMESTAMP(0)"
-        datetime updated_at "TIMESTAMP(0), DEFAULT CURRENT_TIMESTAMP(0)" -- ON UPDATE 동작은 CREATE TABLE문에 없음
+        datetime updated_at "TIMESTAMP(0), DEFAULT CURRENT_TIMESTAMP(0)"
     }
 
     DREAMS {
@@ -105,7 +104,7 @@ erDiagram
         int user_id FK "not null"
         string title "VARCHAR(255), not null, DEFAULT '나의 꿈'"
         text dream_content "TEXT, not null"
-        text interpretation "TEXT, nullable" -- 해석 결과가 직접 컬럼으로 포함
+        text interpretation "TEXT, nullable"
         datetime created_at "TIMESTAMP(0), DEFAULT CURRENT_TIMESTAMP(0)"
     }
 
@@ -122,7 +121,6 @@ erDiagram
         int user_id FK "not null"
         int post_id FK "not null"
         datetime created_at "TIMESTAMP(0), DEFAULT CURRENT_TIMESTAMP(0)"
-        -- UK(user_id, post_id) (UNIQUE INDEX user_post_like)
     }
 
     SCRAPS {
@@ -130,7 +128,6 @@ erDiagram
         int user_id FK "not null"
         int post_id FK "not null"
         datetime created_at "TIMESTAMP(0), DEFAULT CURRENT_TIMESTAMP(0)"
-        -- UK(user_id, post_id) (UNIQUE INDEX user_post_scrap)
     }
 
 ```
