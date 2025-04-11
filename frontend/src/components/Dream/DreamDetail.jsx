@@ -5,8 +5,7 @@ import {
   Box, Heading, Text, Spinner, Alert, AlertIcon, VStack, Divider, Button, Flex, Spacer, useToast,
   Card, CardHeader, CardBody
 } from '@chakra-ui/react';
-import { marked } from 'marked';
-import DOMPurify from 'dompurify';
+import InterpretationDisplay from './InterpretationDisplay'; // InterpretationDisplay 컴포넌트 임포트
 
 function DreamDetail() {
   const { id: dreamId } = useParams(); // URL 파라미터에서 꿈 ID 가져오기
@@ -16,54 +15,6 @@ function DreamDetail() {
   const [dream, setDream] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-
-  // --- 파싱 로직 수정: 문장별 해석도 배열로 반환 ---
-  const parseInterpretationDetail = (markdownText) => {
-      if (!markdownText) {
-          // 빈 배열과 빈 문자열 반환
-          return { sentenceInterpretations: [], summaryPart: '' };
-      }
-      let sentencesPart = '';
-      let summaryPart = '';
-      const sentenceInterpretations = []; // 문장별 해석 객체 배열
-
-      const parts = markdownText.split('---');
-
-      if (parts.length >= 2) {
-           summaryPart = parts[parts.length - 1].replace(/###\s*종합\s*해몽[:]*\s*/i, '').trim();
-           sentencesPart = parts.slice(0, parts.length - 1).join('---').replace(/###\s*문장별\s*해몽[:]*\s*/i, '').trim();
-      } else {
-           const summaryMatch = markdownText.match(/###\s*종합\s*해몽[:]*\s*([\s\S]*)/i);
-           if (summaryMatch && summaryMatch[1]) {
-               summaryPart = summaryMatch[1].trim();
-               sentencesPart = markdownText.substring(0, summaryMatch.index).replace(/###\s*문장별\s*해몽[:]*\s*/i, '').trim();
-           } else {
-               sentencesPart = markdownText.replace(/###\s*문장별\s*해몽[:]*\s*/i, '').trim();
-               summaryPart = '';
-               console.warn("Detailed view: Could not find summary separator.");
-           }
-      }
-
-      // --- sentencesPart를 파싱하여 sentenceInterpretations 배열 생성 ---
-      const sentenceRegex = /\*\*문장\s*\d+:\*\*\s*([\s\S]*?)\s*\*\*해석:\*\*\s*([\s\S]*?)(?=\*\*문장\s*\d+:\*\*|\n*$)/g;
-      let match;
-      while ((match = sentenceRegex.exec(sentencesPart)) !== null) {
-           sentenceInterpretations.push({
-              original: match[1]?.trim().replace(/\n+/g, ' ') || '?', // 원본 문장
-              interpretation: match[2]?.trim() || '(해석 없음)' // 해석 내용
-          });
-      }
-      // 만약 정규식 매칭 실패 시, sentencesPart 전체를 하나의 해석으로 넣는 예외 처리 (선택적)
-      if (sentenceInterpretations.length === 0 && sentencesPart.trim() !== '') {
-          sentenceInterpretations.push({ original: '(원본 문장 불명)', interpretation: sentencesPart.trim() });
-          console.warn("Detailed view: Failed to parse sentence interpretations using regex.");
-      }
-      // ----------------------------------------------------------
-
-      // 이제 sentencesPart 대신 sentenceInterpretations 배열을 반환
-      return { sentenceInterpretations, summaryPart };
-  };
-  // --------------------------------------------------
 
   useEffect(() => {
     const fetchDreamDetail = async () => {
@@ -106,17 +57,6 @@ function DreamDetail() {
       return new Date(dateString).toLocaleDateString('ko-KR', options);
   };
 
-  // 해몽 내용을 안전하게 HTML로 변환하는 함수
-  const createMarkup = (markdownText) => {
-      if (!markdownText) return { __html: '' };
-      try {
-          return { __html: DOMPurify.sanitize(marked(markdownText)) };
-      } catch (e) {
-          console.error("Markdown 처리 오류:", e);
-          return {__html: '<p>내용을 표시하는 중 오류 발생</p>'};
-      }
-  };
-
   // --- 로딩 상태 렌더링 ---
   if (loading) {
     return <Flex justify="center" align="center" minHeight="300px"><Spinner size="xl" /></Flex>;
@@ -139,11 +79,6 @@ function DreamDetail() {
     return <Text p={5}>꿈 정보를 찾을 수 없습니다.</Text>;
   }
 
-  // --- 파싱된 결과 변수 선언 (위치를 여기로 이동!) ---
-  // dream 객체가 null이 아닐 때만 이 코드가 실행됨
-  const { sentenceInterpretations, summaryPart } = parseInterpretationDetail(dream.interpretation);
-  // ----------------------------------------------
-
   // --- 최종 UI 렌더링 ---
   return (
     <Box p={5} maxW="container.lg" mx="auto">
@@ -156,60 +91,20 @@ function DreamDetail() {
           {/* <Text fontSize="sm" color="gray.500">작성자: {dream.username || '알 수 없음'}</Text> */}
         </Box>
 
-        {/* 원본 꿈 내용 Card */}
-        <Card variant="outline">
-          <CardHeader pb={2}>
-            <Heading size='md' color="gray.700">나의 꿈 이야기</Heading>
-          </CardHeader>
-          <CardBody pt={2}>
-            <Text whiteSpace="pre-wrap" lineHeight="tall">{dream.dream_content}</Text>
-          </CardBody>
-        </Card>
+        {/* --- 원본 꿈 내용 (Card 제거) --- */}
+        <Box>
+            <Heading size='md' color="gray.700" mb={3}>나의 꿈 이야기</Heading>
+            <Text whiteSpace="pre-wrap" lineHeight="tall" p={4} bg="gray.50" borderRadius="md" borderWidth="1px" borderColor="gray.200">
+                {dream.dream_content}
+            </Text>
+        </Box>
 
-        {/* AI 해몽 결과 Card */}
-        <Card variant="outline">
-          <CardHeader pb={2}>
-            <Heading size='md' color="gray.700">AI 꿈 해몽</Heading>
-          </CardHeader>
-          <CardBody pt={2}>
-            <VStack spacing={6} align="stretch">
-              {/* 문장별 해몽 섹션 */}
-              {sentenceInterpretations.length > 0 && (
-                <Box borderWidth="1px" borderRadius="md" p={4}>
-                  <Heading size="sm" mb={4} color="gray.600">문장별 해몽</Heading>
-                  <VStack spacing={5} align="stretch">
-                    {sentenceInterpretations.map((item, index) => (
-                      <Box key={index} borderWidth="1px" borderRadius="md" p={3} bg={index % 2 === 0 ? 'white' : 'gray.50'}>
-                        <Heading size="xs" mb={2} color="gray.500">
-                          문장 {index + 1}
-                        </Heading>
-                        <Text fontStyle="italic" mb={2}>"{item.original}"</Text>
-                        <Divider mb={2} />
-                        <Heading size="xs" mb={2} color="teal.600">
-                          해석
-                        </Heading>
-                        <Box className="markdown-output" dangerouslySetInnerHTML={createMarkup(item.interpretation)} lineHeight="tall"/>
-                      </Box>
-                    ))}
-                  </VStack>
-                </Box>
-              )}
-
-              {/* 종합 해몽 섹션 */}
-              {summaryPart && (
-                <Box borderWidth="1px" borderRadius="md" p={4} bg="gray.50">
-                  <Heading size="sm" mb={3} color="gray.600">종합 해몽</Heading>
-                  <Box className="markdown-output" dangerouslySetInnerHTML={createMarkup(summaryPart)} lineHeight="tall"/>
-                </Box>
-              )}
-
-              {/* 둘 다 내용이 없는 경우 */}
-              {sentenceInterpretations.length === 0 && !summaryPart && (
-                  <Text color="gray.500">(해몽 내용을 불러올 수 없거나 내용이 없습니다.)</Text>
-              )}
-            </VStack>
-          </CardBody>
-        </Card>
+        {/* --- AI 해몽 결과 (단순화된 렌더링) --- */}
+        <Box>
+            <Heading size='md' color="black.700" mb={3}>AI 꿈 해몽</Heading>
+            {/* dream.interpretation 전체를 InterpretationDisplay 컴포넌트로 렌더링 */}
+            <InterpretationDisplay interpretationData={dream.interpretation} />
+        </Box>
 
         {/* 목록으로 돌아가기 버튼 */}
         <Flex>

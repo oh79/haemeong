@@ -29,41 +29,73 @@ router.post('/', authenticateToken, async (req, res) => {
     try {
         // --- 여기가 수정될 프롬프트 부분 ---
         const prompt = `
-다음 꿈 내용을 분석하고, 각 문장별로 한국 문화적 맥락과 현대 심리학적 관점을 포함하여 상세하게 해몽해주세요. 마지막에는 꿈 전체에 대한 종합적인 해몽 요약을 제공해주세요. 각 문장별 해몽은 "**문장 N:** [사용자 문장] **해석:** [해몽 내용]" 형식으로 작성하고, 종합 해몽은 "---" 구분자 다음에 "### 종합 해몽" 제목과 함께 작성해주세요.
+당신은 한국 문화와 현대 심리학에 능통한 꿈 해몽 전문가입니다.
+다음 꿈 내용과 제목을 분석하여 아래 명시된 JSON 형식으로만 응답해주세요.
+절대로 JSON 형식 외의 다른 텍스트(예: 설명, 인사말)를 포함하지 마세요.
 
-꿈 제목: ${title}
+꿈 제목: "${title}"
 꿈 내용:
-${dream_content}
+"${dream_content}"
 
----
-### 문장별 해몽
-**문장 1:** [첫 번째 문장] **해석:** [한국 문화적 해석 + 심리학적 해석]
-**문장 2:** [두 번째 문장] **해석:** [한국 문화적 해석 + 심리학적 해석]
-... (나머지 문장)
+응답 JSON 구조:
+{
+  "dreamType": "꿈의 종류 (예: 길몽, 흉몽, 태몽, 심리몽 등 간결한 한 단어)",
+  "symbolAnalysis": ["꿈 속 주요 상징(예: 동물, 사물, 행동)과 그 문화적/심리학적 의미를 설명하는 문자열 요소들의 배열"],
+  "culturalInterpretation": "한국 문화적 관점에서 꿈 전체에 대한 해석 (길몽/흉몽 여부 포함)",
+  "psychologicalInterpretation": "현대 심리학(프로이트, 융 등) 기반의 무의식, 현재 심리 상태 분석",
+  "advice": "꿈을 바탕으로 사용자에게 전하는 긍정적인 조언 또는 위로"
+}
 
----
-### 종합 해몽
-[꿈 전체에 대한 종합적인 해몽 요약 (문화적/심리학적 관점 포함)]
+JSON 응답 예시:
+{
+  "dreamType": "길몽",
+  "symbolAnalysis": [
+    "돼지: 한국 문화에서 재물과 행운을 상징합니다. 심리적으로는 풍요와 만족감을 나타냅니다.",
+    "집 안으로 들어오는 돼지: 재물이나 좋은 기회가 집안으로 들어오는 것을 의미합니다."
+  ],
+  "culturalInterpretation": "전통적으로 큰 재물운이 들어올 것을 암시하는 매우 좋은 꿈입니다.",
+  "psychologicalInterpretation": "현재 심리적으로 만족스럽고 풍요로운 상태이며, 새로운 기회에 대한 기대감이 무의식에 반영된 것으로 보입니다.",
+  "advice": "긍정적인 마음으로 다가오는 좋은 기회를 잡을 준비를 하세요. 자신감을 가져도 좋습니다!"
+}
 `;
         // ---------------------------------
 
-        // AI 모델 호출 (예시: OpenAI 사용 시)
+        // AI 모델 호출 (JSON 응답 형식 지정)
+        console.log("--- OpenAI API 요청 시작 ---");
         const completion = await openai.chat.completions.create({
-            model: "gpt-3.5-turbo", // 또는 사용하는 모델
+            model: "gpt-3.5-turbo-0125", // JSON 모드 지원 모델 확인 (최신 버전 권장)
             messages: [{ role: "user", content: prompt }],
+            response_format: { type: "json_object" },
             // max_tokens: 1000, // 필요시 토큰 제한 설정
         });
+        console.log("--- OpenAI API 응답 수신 ---");
 
-        const interpretation = completion.choices[0].message.content.trim();
+        const interpretationJsonString = completion.choices[0].message.content.trim();
+        console.log("Raw JSON String from OpenAI:", interpretationJsonString);
 
-        // DB 저장 로직
+        // --- DB 저장 로직 (JSON 문자열 그대로 저장) ---
         const [result] = await pool.query(
             'INSERT INTO dreams (user_id, title, dream_content, interpretation) VALUES (?, ?, ?, ?)',
-            [userId, title, dream_content, interpretation]
+            // interpretationJsonString을 DB에 저장
+            [userId, title, dream_content, interpretationJsonString]
         );
         const insertId = result.insertId;
+        console.log(`--- Dream ${insertId} 저장 완료 ---`);
+        // ------------------------------------------
 
-        res.status(201).json({ dream: { id: insertId, title, interpretation } });
+        // --- 응답 전송 (파싱된 JSON 객체 전송) ---
+        try {
+            const parsedInterpretation = JSON.parse(interpretationJsonString);
+            res.status(201).json({ dream: { id: insertId, title, interpretation: parsedInterpretation } });
+            console.log("--- 클라이언트에 파싱된 JSON 응답 전송 ---");
+        } catch (parseError) {
+             console.error('Error parsing JSON from OpenAI:', parseError);
+             console.error('Invalid JSON string was:', interpretationJsonString);
+             // 파싱 실패 시, 일단 원본 문자열이라도 보내거나 에러 처리
+             // 여기서는 파싱 실패 에러를 클라이언트에게 알리는 것이 좋을 수 있음
+             res.status(500).json({ message: 'AI 응답 처리 중 오류 발생 (JSON 파싱 실패)' });
+        }
+        // ------------------------------------
 
     } catch (error) {
         console.error('Error interpreting dream:', error);
@@ -80,7 +112,7 @@ router.get('/my', authenticateToken, async (req, res) => {
 
     try {
         const [dreams] = await pool.query(
-            `SELECT id, title, interpretation, created_at 
+            `SELECT id, title, dream_content, interpretation, created_at 
              FROM dreams 
              WHERE user_id = ? 
              ORDER BY created_at DESC`,
@@ -136,12 +168,22 @@ router.get('/:dreamId', authenticateToken, async (req, res) => { // 이제 '/my'
         }
         const dream = dreamResult[0];
 
-        // --- (추가 기능) 작성자 본인 확인 ---
-        // const isOwner = userId && dream.user_id === userId;
-        // res.status(200).json({ ...dream, isOwner });
-        // ----------------------------------
-
-        res.status(200).json(dream); // 일단 모든 정보 반환
+        // --- interpretation 필드를 JSON으로 파싱 --- //
+        let parsedInterpretation = null;
+        try {
+            if (dream.interpretation) {
+                parsedInterpretation = JSON.parse(dream.interpretation);
+            }
+            // 파싱된 interpretation을 포함하여 응답 전송
+            res.status(200).json({ ...dream, interpretation: parsedInterpretation });
+        } catch (parseError) {
+            console.error(`Error parsing interpretation JSON for dream ${dreamId}:`, parseError);
+            console.error('Invalid JSON string in DB was:', dream.interpretation);
+            // 파싱 실패 시, 클라이언트에 에러를 알리거나 혹은 interpretation 필드를 null 또는 원본 문자열로 보낼 수 있음
+            // 여기서는 null로 보내서 프론트엔드에서 처리하도록 함
+            res.status(200).json({ ...dream, interpretation: null }); // 또는 적절한 에러 응답
+        }
+        // -------------------------------------- //
 
     } catch (error) {
         console.error(`꿈 ${dreamId} 상세 조회 중 오류:`, error);

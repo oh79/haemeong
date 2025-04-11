@@ -68,36 +68,54 @@ function MyDreams() {
         <Text textAlign="center">아직 저장된 꿈 해몽 기록이 없습니다.</Text>
       ) : (
         <List spacing={5}>
-          {myDreams.map((dream) => (
-            <ListItem key={dream.id} p={4} shadow="md" borderWidth="1px" borderRadius="lg">
-              <Flex align="start">
-                <Image
-                  src="/favicon_io/haemeong_char.png"
-                  alt="해멍 캐릭터"
-                  boxSize="120px"
-                  objectFit="contain"
-                  mr={4}
-                  borderRadius="md"
-                />
-                <VStack align="stretch" spacing={2} flex="1">
-                  <Heading as="h3" size="md">
-                    <ListIcon as={MdBookmark} color="teal.500" />
-                    <ChakraLink as={RouterLink} to={`/dreams/${dream.id}`} _hover={{ textDecoration: 'underline', color: 'teal.600' }}>
-                      {dream.title || '제목 없음'}
-                    </ChakraLink>
-                  </Heading>
-                  <Text fontSize="sm" color="gray.600">
-                    <ListIcon as={MdCalendarToday} color="gray.400" />
-                    {formatDate(dream.created_at)}
-                  </Text>
-                  <Divider pt={2} />
-                  <Text noOfLines={2} color="gray.700" mt={2}>
-                    {dream.interpretation ? dream.interpretation.split('### 종합 해몽')[0].replace(/\*\*문장\s*\d+:\*\*.*\*\*해석:\*\*/g, '').replace(/###\s*문장별\s*해몽[:]*\s*/i,'').trim().substring(0, 100) + '...' : '(해몽 내용 없음)'}
-                  </Text>
-                </VStack>
-              </Flex>
-            </ListItem>
-          ))}
+          {myDreams.map((dream) => {
+            // interpretation 필드를 JSON으로 파싱
+            let parsedInterpretation = {};
+            try {
+              if (dream.interpretation) {
+                parsedInterpretation = JSON.parse(dream.interpretation);
+              }
+            } catch (parseError) {
+              console.error("Interpretation JSON 파싱 오류:", parseError, dream.interpretation);
+              // 파싱 오류 시 빈 객체로 유지
+            }
+
+            return (
+              <ListItem key={dream.id} p={4} shadow="md" borderWidth="1px" borderRadius="lg">
+                <Flex align="start">
+                  <Image
+                    src="/src/assets/cha_v2_nobg.png"
+                    alt="해멍 캐릭터"
+                    boxSize="120px"
+                    objectFit="contain"
+                    mr={4}
+                    borderRadius="md"
+                  />
+                  <VStack align="stretch" spacing={2} flex="1">
+                    <Heading as="h3" size="md">
+                      <ListIcon as={MdBookmark} color="teal.500" />
+                      <ChakraLink as={RouterLink} to={`/dreams/${dream.id}`} _hover={{ textDecoration: 'underline', color: 'teal.600' }}>
+                        {dream.title || '제목 없음'}
+                      </ChakraLink>
+                    </Heading>
+                    {/* dreamType 표시 */}
+                    <Text fontSize="sm" color="blue.600" fontWeight="bold">
+                      {parsedInterpretation.dreamType || '타입 정보 없음'}
+                    </Text>
+                    <Text fontSize="sm" color="gray.600">
+                      <ListIcon as={MdCalendarToday} color="gray.400" />
+                      {formatDate(dream.created_at)}
+                    </Text>
+                    <Divider pt={2} />
+                    {/* 원본 꿈 내용(dream_content) 표시 */}
+                    <Text noOfLines={3} color="gray.700" mt={2} whiteSpace="pre-wrap">
+                      {dream.dream_content || '(입력된 꿈 내용 없음)'}
+                    </Text>
+                  </VStack>
+                </Flex>
+              </ListItem>
+            );
+          })}
         </List>
       )}
     </Box>
