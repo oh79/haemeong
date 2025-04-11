@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import {
   Box, Heading, Text, Spinner, Alert, AlertIcon, VStack,
-  List, ListItem, ListIcon, Link as ChakraLink, Divider, Flex, Spacer
+  List, ListItem, ListIcon, Link as ChakraLink, Divider, Flex, Spacer,
+  Image
 } from '@chakra-ui/react';
 import { MdBookmark, MdCalendarToday } from 'react-icons/md'; // 아이콘 추가
 import { Link as RouterLink } from 'react-router-dom'; // 상세 보기용 링크 (추후 구현 시)
@@ -22,7 +23,7 @@ function MyDreams() {
           throw new Error('로그인이 필요합니다.'); // 로그인 안되어 있으면 에러
         }
 
-        const response = await axios.get('http://localhost:5000/api/dreams/my', {
+        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/dreams/my`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setMyDreams(response.data);
@@ -67,26 +68,54 @@ function MyDreams() {
         <Text textAlign="center">아직 저장된 꿈 해몽 기록이 없습니다.</Text>
       ) : (
         <List spacing={5}>
-          {myDreams.map((dream) => (
-            <ListItem key={dream.id} p={4} shadow="md" borderWidth="1px" borderRadius="lg">
-              <VStack align="stretch" spacing={2}>
-                <Heading as="h3" size="md">
-                  <ListIcon as={MdBookmark} color="teal.500" />
-                  <ChakraLink as={RouterLink} to={`/dreams/${dream.id}`} _hover={{ textDecoration: 'underline', color: 'teal.600' }}>
-                    {dream.title || '제목 없음'}
-                  </ChakraLink>
-                </Heading>
-                <Text fontSize="sm" color="gray.600">
-                  <ListIcon as={MdCalendarToday} color="gray.400" />
-                  {formatDate(dream.created_at)}
-                </Text>
-                <Divider pt={2} />
-                <Text noOfLines={3} color="gray.700" mt={2}>
-                    {dream.interpretation || '(해몽 내용 없음)'}
-                </Text>
-              </VStack>
-            </ListItem>
-          ))}
+          {myDreams.map((dream) => {
+            // interpretation 필드를 JSON으로 파싱
+            let parsedInterpretation = {};
+            try {
+              if (dream.interpretation) {
+                parsedInterpretation = JSON.parse(dream.interpretation);
+              }
+            } catch (parseError) {
+              console.error("Interpretation JSON 파싱 오류:", parseError, dream.interpretation);
+              // 파싱 오류 시 빈 객체로 유지
+            }
+
+            return (
+              <ListItem key={dream.id} p={4} shadow="md" borderWidth="1px" borderRadius="lg">
+                <Flex align="start">
+                  <Image
+                    src="/src/assets/cha_v2_nobg.png"
+                    alt="해멍 캐릭터"
+                    boxSize="120px"
+                    objectFit="contain"
+                    mr={4}
+                    borderRadius="md"
+                  />
+                  <VStack align="stretch" spacing={2} flex="1">
+                    <Heading as="h3" size="md">
+                      <ListIcon as={MdBookmark} color="teal.500" />
+                      <ChakraLink as={RouterLink} to={`/dreams/${dream.id}`} _hover={{ textDecoration: 'underline', color: 'teal.600' }}>
+                        {dream.title || '제목 없음'}
+                      </ChakraLink>
+                    </Heading>
+                    {/* dreamType 표시 */}
+                    <Text fontSize="sm" color="blue.600" fontWeight="bold">
+                      {parsedInterpretation.dreamType || '타입 정보 없음'}
+                    </Text>
+                    <Text fontSize="sm" color="gray.600">
+                      <ListIcon as={MdCalendarToday} color="gray.400" />
+                      {formatDate(dream.created_at)}
+                    </Text>
+                    <Divider pt={2} />
+                    {/* 원본 꿈 내용(dream_content) 표시 */}
+                    <Text noOfLines={3} color="gray.700" mt={2} whiteSpace="pre-wrap">
+                      {dream.dream_content || '(입력된 꿈 내용 없음)'}
+                    </Text>
+                  </VStack>
+                </Flex>
+              </ListItem>
+            );
+          })}
         </List>
       )}
     </Box>

@@ -62,19 +62,11 @@ function PostWrite() {
     }
 
     try {
-      const response = await axios.post('http://localhost:5000/api/posts', { title, content });
-      console.log('새 글 작성 성공:', response.data);
-      toast({
-          title: "작성 완료",
-          description: "게시글이 성공적으로 등록되었습니다.",
-          status: "success",
-          duration: 2000,
-          isClosable: true,
-      });
-      // 작성된 글로 이동 (PostDetail 구현 후)
-      // navigate(`/board/${response.data.id}`);
-      // 목록 페이지로 이동
-      setTimeout(() => navigate('/board'), 1000);
+      // 게시글 생성 API 호출 (토큰은 axios 기본 설정으로 이미 포함됨)
+      // const response = await axios.post('http://localhost:5000/api/posts', { title, content });
+      const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/posts`, { title, content });
+      toast({ title: "게시글 작성 완료", status: "success" });
+      navigate(`/posts/${response.data.post.id}`); // 작성된 게시글 상세 페이지로 이동
 
     } catch (error) {
       console.error('게시글 작성 오류:', error);

@@ -7,12 +7,12 @@ function Home() {
   const userInfo = JSON.parse(localStorage.getItem('userInfo'));
   const isLoggedIn = !!localStorage.getItem('authToken');
 
-  // 예시 데이터 (실제로는 API 호출 등을 통해 가져와야 함)
+  // 추천 해몽 예시 데이터 수정
   const exampleItems = [
-    { id: 1, title: '해몽 서비스 A', description: '가장 인기있는 꿈 해몽 서비스입니다.', image: 'https://via.placeholder.com/150?text=Dream+A' },
-    { id: 2, title: '꿈 분석 B', description: '심층 분석 전문', image: 'https://via.placeholder.com/150?text=Dream+B' },
-    { id: 3, title: '길몽 찾기', description: '좋은 꿈을 찾아보세요.', image: 'https://via.placeholder.com/150?text=Good+Dream' },
-    { id: 4, title: '악몽 상담', description: '힘든 꿈에 대한 상담', image: 'https://via.placeholder.com/150?text=Nightmare' },
+    { id: 1, title: '오늘의 해몽', description: '매일 업데이트되는 인기 해몽 풀이', image: '/src/assets/cha_v2_nobg.png' },
+    { id: 2, title: '애정운 상담', description: '꿈으로 알아보는 나의 연애/결혼운', image: '/src/assets/cha_v2_nobg.png' },
+    { id: 3, title: '재물운 분석', description: '대박 꿈? 쪽박 꿈? 돈과 관련된 꿈 분석', image: '/src/assets/cha_v2_nobg.png' },
+    { id: 4, title: '악몽/불길한 꿈 상담', description: '나쁜 꿈의 의미와 극복 방법 알아보기', image: '/src/assets/cha_v2_nobg.png' },
   ];
 
   return (
@@ -21,7 +21,7 @@ function Home() {
         {/* --- 상단 환영 메시지 및 메인 기능 --- */}
         <Box textAlign="center" p={5} shadow="md" borderWidth="1px" borderRadius="lg">
           <Heading as="h1" size="xl" color="teal.600" mb={4}>
-            당신의 꿈을 해석해 보세요
+            AI 꿈 해몽
           </Heading>
           {isLoggedIn && userInfo ? (
             <Text fontSize="lg" color="gray.600" mb={6}>
@@ -34,9 +34,7 @@ function Home() {
           )}
 
           {isLoggedIn ? (
-            <Box width="100%" p={6} borderWidth={1} borderRadius="lg" bg="teal.50">
-              <DreamInterpreter />
-            </Box>
+            <DreamInterpreter />
           ) : (
             <Button as={Link} to="/login" colorScheme="teal" size="lg">
               로그인하고 시작하기
