@@ -76,8 +76,8 @@ function DreamDetail() {
         }
 
         // 백엔드 API 호출 (GET /api/dreams/:dreamId)
-        const response = await axios.get(`http://localhost:5000/api/dreams/${dreamId}`, {
-          headers: { Authorization: `Bearer ${token}` } 
+        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/dreams/${dreamId}`, {
+          headers: { Authorization: `Bearer ${token}` }
         });
         setDream(response.data);
 

@@ -36,14 +36,10 @@ function VerifyPassword() {
     setError('');
 
     try {
-      // 백엔드에 비밀번호 확인 요청 (엔드포인트는 실제 구현에 맞게 조정 필요)
-      await axios.post('http://localhost:5000/api/users/me/verify-password', { password });
-
-      // 성공 시 EditProfile 페이지로 이동 (리다이렉션과 함께 상태 전달은 필요 없을 수 있음)
-      // 성공했다는 상태를 EditProfile에서 알 필요가 있다면 location.state 등을 사용할 수 있음
+      // 비밀번호 검증 API 호출
+      await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/users/me/verify-password`, { password });
       toast({ title: "비밀번호 확인 성공", status: "success", duration: 1500, isClosable: true });
       navigate('/edit-profile'); // 정보 수정 페이지로 이동
-
     } catch (err) {
       const errorMsg = err.response?.data?.message || '비밀번호 확인 중 오류가 발생했습니다.';
       setError(errorMsg); // 에러 메시지 표시

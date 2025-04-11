@@ -111,7 +111,9 @@ function DreamInterpreter() {
     setResultTitle('');
 
     try {
-      const response = await axios.post('http://localhost:5000/api/dreams', {
+      // 백엔드 API 호출 (/api/dreams)
+      // const response = await axios.post('http://localhost:5000/api/dreams', {
+      const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/dreams`, {
         title: title.trim(),
         dream_content: dreamContent
       });

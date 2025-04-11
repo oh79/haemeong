@@ -46,7 +46,7 @@ function Signup() {
     }
 
     try {
-      const response = await axios.post('http://localhost:5000/api/auth/signup', formData);
+      const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/auth/signup`, formData);
       //setMessage(response.data.message);
 
       toast({

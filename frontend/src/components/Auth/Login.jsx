@@ -40,7 +40,7 @@ function Login() {
     }
 
     try {
-      const response = await axios.post('http://localhost:5000/api/auth/login', formData);
+      const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/auth/login`, formData);
       // setMessage(response.data.message); // Toast 사용
 
       const { token, user } = response.data;

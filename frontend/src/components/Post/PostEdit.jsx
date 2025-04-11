@@ -34,7 +34,7 @@ function PostEdit() {
     setLoading(true);
     setInitialLoadingError('');
     try {
-      const response = await axios.get(`http://localhost:5000/api/posts/${postId}`);
+      const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/posts/${postId}`);
       const postData = response.data;
       const currentUser = JSON.parse(localStorage.getItem('userInfo'));
       if (!currentUser || postData.user_id !== currentUser.id) {
@@ -81,7 +81,7 @@ function PostEdit() {
     }
 
     try {
-      const response = await axios.put(`http://localhost:5000/api/posts/${postId}`, { title, content });
+      const response = await axios.put(`${import.meta.env.VITE_API_BASE_URL}/api/posts/${postId}`, { title, content });
       console.log('게시글 수정 성공:', response.data);
       toast({
           title: "수정 완료",

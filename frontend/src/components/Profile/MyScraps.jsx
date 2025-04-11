@@ -43,7 +43,7 @@ function MyScraps() {
       if (!token) {
         throw new Error('로그인이 필요합니다.'); // 로그인 필요 에러 발생
       }
-      const response = await axios.get('http://localhost:5000/api/posts/scraps/me', {
+      const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/posts/scraps/me`, {
         headers: { Authorization: `Bearer ${token}` } // 명시적으로 헤더 추가 (axios 기본값에 의존하지 않음)
       });
       setScrappedPosts(response.data);
