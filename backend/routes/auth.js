@@ -1,6 +1,8 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
-const pool = require('../config/db'); // DB 연결 풀 가져오기
+// const { PrismaClient } = require('@prisma/client'); // 표준 Prisma Client import -> 삭제
+// const prisma = new PrismaClient(); // Prisma Client 인스턴스 생성 -> 삭제
+const prisma = require('../lib/prisma'); // 싱글톤 Prisma Client 인스턴스 가져오기
 const jwt = require('jsonwebtoken'); // jsonwebtoken 임포트 추가
 
 const router = express.Router();
@@ -20,20 +22,24 @@ router.post('/signup', async (req, res) => {
     return res.status(400).json({ message: '비밀번호는 6자 이상이어야 합니다.' });
   }
 
-  let connection; // try-catch-finally에서 connection을 참조하기 위해 밖에 선언
-
   try {
-    connection = await pool.getConnection(); // 풀에서 연결 가져오기
+    // 3. 사용자 이름 또는 이메일 중복 확인 (Prisma 사용)
+    console.log('[/signup] Checking for existing user...');
+    // console.log('[/signup] typeof prisma:', typeof prisma); // 디버깅용 로그 제거
+    // console.log('[/signup] prisma object keys:', prisma ? Object.keys(prisma) : 'prisma is null/undefined'); // 디버깅용 로그 제거
 
-    // 3. 사용자 이름 또는 이메일 중복 확인
-    const [existingUsers] = await connection.query(
-      'SELECT username, email FROM users WHERE username = ? OR email = ?',
-      [username, email]
-    );
+    const existingUser = await prisma.users.findFirst({
+      where: {
+        OR: [
+          { username: username },
+          { email: email },
+        ],
+      },
+    });
 
-    if (existingUsers.length > 0) {
+    if (existingUser) {
       let message = '';
-      if (existingUsers[0].username === username) {
+      if (existingUser.username === username) {
         message = '이미 사용 중인 사용자 이름입니다.';
       } else {
         message = '이미 사용 중인 이메일입니다.';
@@ -44,13 +50,16 @@ router.post('/signup', async (req, res) => {
     // 4. 비밀번호 해싱
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-    // 5. 새 사용자 정보 DB에 저장
-    const [result] = await connection.query(
-      'INSERT INTO users (username, email, password) VALUES (?, ?, ?)',
-      [username, email, hashedPassword]
-    );
+    // 5. 새 사용자 정보 DB에 저장 (Prisma 사용)
+    const newUser = await prisma.users.create({
+      data: {
+        username: username,
+        email: email,
+        password: hashedPassword,
+      },
+    });
 
-    console.log('회원가입 성공:', { id: result.insertId, username, email }); // 서버 로그
+    console.log('회원가입 성공:', { id: newUser.id, username, email }); // 서버 로그
 
     // 6. 성공 응답 전송
     res.status(201).json({ message: '회원가입이 성공적으로 완료되었습니다.' }); // 201 Created: 리소스 생성됨
@@ -58,10 +67,6 @@ router.post('/signup', async (req, res) => {
   } catch (error) {
     console.error('회원가입 처리 중 오류 발생:', error);
     res.status(500).json({ message: '서버 오류가 발생했습니다. 나중에 다시 시도해주세요.' }); // 500 Internal Server Error
-  } finally {
-    if (connection) {
-      connection.release(); // 사용한 연결은 반드시 풀에 반환!
-    }
   }
 });
 
@@ -74,22 +79,16 @@ router.post('/login', async (req, res) => {
     return res.status(400).json({ message: '사용자 이름과 비밀번호를 모두 입력해주세요.' });
   }
 
-  let connection;
   try {
-    connection = await pool.getConnection();
-
-    // 2. 사용자 이름으로 사용자 찾기
-    const [users] = await connection.query(
-      'SELECT id, username, email, password FROM users WHERE username = ?',
-      [username]
-    );
+    // 2. 사용자 이름으로 사용자 찾기 (Prisma 사용, email 포함)
+    const user = await prisma.users.findUnique({
+      where: { username: username },
+    });
 
     // 3. 사용자가 존재하지 않는 경우
-    if (users.length === 0) {
+    if (!user) {
       return res.status(401).json({ message: '사용자 이름 또는 비밀번호가 올바르지 않습니다.' }); // Unauthorized
     }
-
-    const user = users[0];
 
     // 4. 입력된 비밀번호와 DB의 해시된 비밀번호 비교
     const isMatch = await bcrypt.compare(password, user.password);
@@ -125,10 +124,6 @@ router.post('/login', async (req, res) => {
   } catch (error) {
     console.error('로그인 처리 중 오류 발생:', error);
     res.status(500).json({ message: '서버 오류가 발생했습니다. 나중에 다시 시도해주세요.' });
-  } finally {
-    if (connection) {
-      connection.release();
-    }
   }
 });
 

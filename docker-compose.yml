@@ -22,10 +22,11 @@ services:
       dockerfile: Dockerfile
     ports:
       - "5000:5000"
+    depends_on:
+      mysql:
+        condition: service_healthy
     volumes:
-      - ./backend:/app
-      - /app/node_modules
-    # DB 연결 정보, API 키 등은 .env 파일에
+      - backend-uploads:/app/uploads
     env_file:
       - ./backend/.env
     environment:
@@ -40,6 +41,12 @@ services:
       - ./backend/.env
     volumes:
       - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost", "-P", "3306", "-uroot", "-p${DB_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 volumes:
   mysql-data:
+  backend-uploads:
