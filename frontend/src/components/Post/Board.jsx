@@ -10,17 +10,25 @@ import {
   Input, // 검색 입력창
   Link as ChakraLink, // Chakra의 Link
   Spinner, // 로딩 스피너
-  Table, // 테이블 관련 컴포넌트
-  Thead,
-  Tbody,
-  Tr,
-  Th,
-  Td,
-  TableContainer, // 테이블 감싸기 (반응형 스크롤 등)
+  // Table 관련 컴포넌트 제거
+  // Table,
+  // Thead,
+  // Tbody,
+  // Tr,
+  // Th,
+  // Td,
+  // TableContainer,
   Alert,
   AlertIcon,
-  Text
+  Text,
+  VStack, // 카드 목록을 위한 수직 스택
+  HStack, // 카드 내부 요소 가로 배치
+  Image, // 게시글 이미지 (추후 사용)
+  IconButton, // IconButton 추가
+  // AspectRatio, // 사용하지 않으면 제거
 } from '@chakra-ui/react';
+// 아이콘 추가
+import { AddIcon, EditIcon, SearchIcon } from '@chakra-ui/icons'; // EditIcon 추가 (데스크탑 버튼용), SearchIcon 추가
 
 function Board() {
   const [posts, setPosts] = useState([]); // 게시글 목록 상태
@@ -60,13 +68,19 @@ function Board() {
     fetchPosts(currentSearch); // 현재 URL의 검색어로 데이터 요청
   }, [fetchPosts, currentSearch]); // fetchPosts 또는 currentSearch 변경 시 실행
 
-  // 날짜 형식 변환 함수 (Y-m-d 형식으로 변경)
+  // 날짜 형식 변환 함수 (간단하게 시간 포함하도록 변경)
   const formatDate = (dateString) => {
-      const date = new Date(dateString);
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      return `${year}-${month}-${day}`;
+    // 입력값 유효성 검사 추가
+    if (!dateString || isNaN(new Date(dateString).getTime())) {
+        return '날짜 없음'; // 또는 다른 기본값
+    }
+    const date = new Date(dateString);
+    // 간단한 상대 시간 또는 YYYY.MM.DD 형식으로 표시 (당근마켓 스타일과 유사하게)
+    // 여기서는 일단 간단하게 YYYY-MM-DD 유지
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   };
 
   // --- 검색 실행 핸들러 ---
@@ -84,84 +98,155 @@ function Board() {
   // --------------------------
 
   return (
-    <Box maxW="container.xl">
-      <Flex justify="space-between" align="center" mb={6} direction={{ base: 'column', sm: 'row' }}> {/* 모바일: 세로, sm 이상: 가로 */}
-        <Heading as="h2" size="lg" mb={{ base: 4, sm: 0 }}>게시판</Heading> {/* 모바일에서 하단 마진 추가 */}
-        <Button as={RouterLink} to="/board/write" colorScheme="teal" size="sm">
-          새 글 작성
+    <Box pb={{ base: '80px', md: 4 }}> {/* 모바일 하단 여백, 데스크탑은 줄임 */}
+      {/* 상단 바 */} 
+      <Flex
+        as="header"
+        position="sticky"
+        top="0"
+        zIndex={50}
+        bg="white"
+        p={4}
+        boxShadow="sm"
+        mb={4}
+        align="center" // 세로 정렬 추가
+      >
+        <Heading as="h1" size="md" mr={4} flexShrink={0}>해멍 게시판</Heading> {/* 제목 변경, 축소 방지 */}
+
+         {/* 검색 폼 (Flex로 감싸서 Input과 Button 배치) */}
+        <Flex as="form" onSubmit={handleSearch} flexGrow={1} mr={{ base: 0, md: 4 }} align="center">
+          <Input
+            placeholder="게시글 검색"
+            value={searchTerm}
+            onChange={handleSearchInputChange}
+            focusBorderColor="teal.400" // 색상 변경
+            bg="gray.100"
+            borderRadius="md"
+            mr={2} // 버튼과의 간격
+          />
+          <IconButton
+            aria-label="검색"
+            icon={<SearchIcon />}
+            type="submit" // 폼 제출 트리거
+            colorScheme="teal" // 테마 색상
+            variant="ghost" // 배경 없는 스타일
+          />
+        </Flex>
+
+        {/* 데스크탑용 글쓰기 버튼 (md 사이즈 이상에서 보임) */}
+        <Button
+          as={RouterLink}
+          to="/board/write"
+          colorScheme="teal" // 색상 변경
+          leftIcon={<EditIcon />} // 아이콘 변경
+          display={{ base: 'none', md: 'inline-flex' }} // md 이상에서 보임
+        >
+          글쓰기
         </Button>
       </Flex>
 
-      {/* 검색 폼 */}
-      <Box as="form" onSubmit={handleSearch} mb={6}>
-        <Flex direction="row" align="center">
-          <Input
-            placeholder="제목 또는 내용 검색"
-            value={searchTerm}
-            onChange={handleSearchInputChange}
-            mr={{ base: 0, sm: 2 }}
-            focusBorderColor="teal.400"
-            flexGrow={1}
-          />
-          <Button type="submit" colorScheme="teal" px={6} flexShrink={5} ml={{ base: 2, sm: 0 }}>
-            검색
-          </Button>
-        </Flex>
-      </Box>
-
-      {/* 로딩 및 메시지 처리 */}
+      {/* 로딩 및 메시지 처리 */} 
       {loading && (
         <Flex justify="center" align="center" minHeight="200px">
-          <Spinner size="xl" color="teal.500" />
+          <Spinner size="xl" color="teal.500" /> {/* 색상 변경 */}
         </Flex>
       )}
       {message && !loading && (
-        <Alert status="error" variant="subtle" borderRadius="md">
+        <Alert status="error" variant="subtle" borderRadius="md" m={4}>
           <AlertIcon />
           {message}
         </Alert>
       )}
 
-      {/* 게시글 목록 테이블 */}
+      {/* 게시글 카드 목록 */} 
       {!loading && !message && (
-        <TableContainer>
-          <Table variant="simple">
-            <Thead>
-              <Tr>
-                <Th>제목</Th>
-                <Th display={{ base: 'none', sm: 'table-cell' }}>작성자</Th>
-                <Th isNumeric display={{ base: 'none', md: 'table-cell' }}>좋아요</Th>
-                <Th isNumeric>작성일</Th>
-              </Tr>
-            </Thead>
-            <Tbody>
-              {posts.length > 0 ? (
-                posts.map(post => (
-                  <Tr key={post.id}>
-                    <Td>
-                      <ChakraLink as={RouterLink} to={`/board/${post.id}`} color="teal.600" _hover={{ textDecoration: 'underline' }}>
+        <VStack spacing={0} align="stretch"> {/* 카드 사이 간격 제거, 수직 정렬 */}
+          {posts.length > 0 ? (
+            posts.map(post => (
+              <ChakraLink
+                as={RouterLink}
+                to={`/board/${post.id}`}
+                key={post.id}
+                _hover={{ textDecoration: 'none', bg: 'gray.50' }}
+              >
+                <Box
+                  borderBottomWidth="1px"
+                  borderColor="gray.200"
+                  p={4}
+                >
+                  <HStack spacing={4} align="start">
+                    {/* 이미지 영역 */} 
+                    {post.imageUrl ? (
+                       <Image
+                         src={`${import.meta.env.VITE_API_BASE_URL}${post.imageUrl}`}
+                         alt={post.title}
+                         boxSize={{ base: "70px", md: "80px" }}
+                         objectFit="cover"
+                         borderRadius="md"
+                         fallbackSrc='/cha_v2_scalup.png'
+                       />
+                    ) : (
+                      <Image
+                        src='/cha_v2_scalup.png'
+                        alt="기본 이미지"
+                        boxSize={{ base: "70px", md: "80px" }}
+                        objectFit="cover"
+                        borderRadius="md"   
+                      />
+                    )}
+
+                    <VStack align="stretch" spacing={1} flex={1} minW={0}> {/* 제목, 정보, 내용 등 */}
+                      <Heading as="h3" size="sm" noOfLines={2}>
                         {post.title}
-                      </ChakraLink>
-                    </Td>
-                    <Td display={{ base: 'none', sm: 'table-cell' }}>{post.username}</Td>
-                    <Td isNumeric display={{ base: 'none', md: 'table-cell' }}>{post.likeCount || 0}</Td>
-                    <Td isNumeric>{formatDate(post.created_at)}</Td>
-                  </Tr>
-                ))
-              ) : (
-                <Tr>
-                  <Td colSpan={{ base: 2, sm: 3, md: 4 }} textAlign="center" py={10}>
-                    <Text color="gray.500">
-                      {currentSearch ? `'${currentSearch}'에 대한 검색 결과가 없습니다.` : '게시글이 없습니다.'}
-                    </Text>
-                  </Td>
-                </Tr>
-              )}
-            </Tbody>
-          </Table>
-        </TableContainer>
+                      </Heading>
+                      <Text fontSize="xs" color="gray.500">
+                        {/* 사용자 이름, 날짜 표시 (location 제거) */}
+                        {post.username || '익명'} · {formatDate(post.created_at)}
+                      </Text>
+                      {/* 좋아요, 댓글 수 표시 (데이터 구조에 맞게 수정) */}
+                      <HStack justify="flex-end" spacing={2} pt={1}>
+                         {post.likeCount > 0 && (
+                           <Text fontSize="xs" color="gray.500">🤍 {post.likeCount}</Text>
+                         )}
+                         {post.commentCount > 0 && (
+                            <Text fontSize="xs" color="gray.500">💬 {post.commentCount}</Text>
+                         )}
+                      </HStack>
+                    </VStack>
+                  </HStack>
+                </Box>
+              </ChakraLink>
+            ))
+          ) : (
+             <Flex justify="center" align="center" minHeight="200px">
+               <Text color="gray.500">
+                 {currentSearch ? `'${currentSearch}'에 대한 검색 결과가 없습니다.` : '아직 게시글이 없어요.'}
+               </Text>
+             </Flex>
+          )}
+        </VStack>
       )}
-      {/* 페이지네이션은 나중에 추가 */}
+
+      {/* 모바일용 새 글 작성 플로팅 버튼 (md 사이즈 미만에서 보임) */}
+      <Button
+        as={RouterLink}
+        to="/board/write"
+        position="fixed"
+        bottom={`${55 + 15}px`} // 하단 네비 높이(55px) + 여백(15px)
+        right="15px" // 오른쪽 여백도 약간 조정
+        colorScheme="teal"
+        borderRadius="full"
+        boxShadow="lg"
+        w="50px" // 크기도 약간 줄임
+        h="50px" // 크기도 약간 줄임
+        aria-label="새 글 작성"
+        zIndex="docked"
+        display={{ base: 'flex', md: 'none' }}
+        justifyContent="center" // 아이콘 중앙 정렬
+        alignItems="center"   // 아이콘 중앙 정렬
+      >
+        <AddIcon w={5} h={5} /> {/* 아이콘 크기 명시 */}
+      </Button>
     </Box>
   );
 }

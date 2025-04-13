@@ -5,7 +5,8 @@ require('dotenv').config();
 
 const express = require('express');
 const cors = require('cors');
-const pool = require('./config/db');
+const path = require('path'); // path 모듈 추가
+// const pool = require('./config/db'); // !!! Prisma 사용으로 제거 !!!
 const authRoutes = require('./routes/auth'); // auth 라우트 가져오기 (추가)
 const dreamRoutes = require('./routes/dream'); // dream 라우트 가져오기 (추가)
 const postRoutes = require('./routes/posts'); // post 라우트 가져오기 (추가)
@@ -21,16 +22,13 @@ app.use(cors());
 // 요청 본문을 JSON으로 파싱하기 위한 미들웨어
 app.use(express.json());
 
-// 간단한 테스트 라우트
+// 정적 파일 제공 설정 (uploads 폴더)
+// /uploads URL 경로로 요청이 오면 backend/uploads 디렉토리에서 파일을 찾음
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// 간단한 테스트 라우트 (DB 연결 확인 코드 제거)
 app.get('/', async (req, res) => {
   res.send('꿈 해몽 서비스 백엔드 서버');
-  try {
-    // DB 연결 확인을 위해 한 번 연결을 시도
-    const [rows, fields] = await db.query('SELECT NOW()');
-    res.json({ message: 'DB connected successfully', time: rows });
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to connect to DB', details: err.message });
-  }
 });
 
 // 인증 관련 라우트 연결 (추가)

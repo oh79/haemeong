@@ -53,7 +53,7 @@ function Navbar() {
       boxShadow="sm"
       borderBottomWidth="1px"
       borderColor="gray.200"
-      height="60px" // 고정 높이
+      height="50px" // 높이 축소 (예: 60px -> 50px)
     >
       <Flex maxW="container.xl" mx="auto" align="center" h="100%">
         <Heading size="lg" color="teal.600"> {/* 크기 약간 줄임 */}
@@ -83,7 +83,7 @@ function Navbar() {
                 color="white"
               />
             </MenuButton>
-            <MenuList color="black" zIndex={1001}>
+            <MenuList color="black" zIndex={2000}>
               <MenuItem as={RouterLink} to="/profile">내 정보</MenuItem>
               <MenuItem as={RouterLink} to="/my-dreams">내 해몽 기록</MenuItem>
               <MenuItem as={RouterLink} to="/my-scraps">내 스크랩</MenuItem>
@@ -145,7 +145,7 @@ function Navbar() {
                 color="white" // 이름 글자색
               />
             </MenuButton>
-            <MenuList color="black" zIndex={1001}>
+            <MenuList color="black" zIndex={2000}>
               <MenuItem as={RouterLink} to="/profile">내 정보</MenuItem>
               <MenuItem as={RouterLink} to="/my-dreams">내 해몽 기록</MenuItem>
               <MenuItem as={RouterLink} to="/my-scraps">내 스크랩</MenuItem>
@@ -175,9 +175,9 @@ function Navbar() {
       boxShadow="0 -2px 10px rgba(0,0,0,0.08)" // 그림자 좀 더 부드럽게
       borderTopRadius="2xl" // 상단 모서리 둥글게
       overflow="hidden" // Radius 적용 위해
-      height="65px" // 하단 네비 높이
+      height="50px" // 높이 축소 (예: 65px -> 55px)
     >
-      <Flex justify="space-around" align="center" height="100%" pt={2} pb={1}> {/* 높이 100% 사용 */}
+      <Flex justify="space-around" align="center" height="100%" pt={1} pb={1}> {/* 패딩 조정 */}
         {/* 모바일 하단 메뉴 아이템 (해몽, 홈, 게시판만) */}
         {[
           { path: '/interpret', label: '해몽하기', icon: FaMoon },
@@ -200,11 +200,11 @@ function Navbar() {
             position="relative"
             h="100%" // 높이 꽉 채우기
           >
-            <Icon as={item.icon} w={5} h={5} mb={1} />
-            <Text fontSize="10px" lineHeight="1.2">{item.label}</Text> {/* 폰트 크기, 줄간격 조정 */}
+            <Icon as={item.icon} w={5} h={5} mb={0} />
+            <Text fontSize="10px" lineHeight="1.1">{item.label}</Text> {/* 라인 높이 조정 */}
             {/* 활성 상태 표시 (선택 사항) */}
             {location.pathname === item.path && (
-              <Box position="absolute" bottom="-2px" left="0" right="0" height="3px" bg="teal.500" borderTopRadius="full" />
+              <Box position="absolute" bottom="0px" left="0" right="0" height="2px" bg="teal.500" borderTopRadius="full" />
             )}
           </ChakraLink>
         ))}

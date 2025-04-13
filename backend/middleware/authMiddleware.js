@@ -28,4 +28,29 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
-module.exports = authenticateToken;
+// optionalAuthenticateToken 함수 추가
+function optionalAuthenticateToken(req, res, next) {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+
+    if (token == null) {
+        // 토큰이 없으면 사용자 정보 없이 다음으로 진행
+        return next();
+    }
+
+    jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+        if (!err) {
+            // 토큰이 유효하면 사용자 정보(페이로드)를 req.user에 추가
+            req.user = user;
+        }
+        // 토큰이 유효하지 않더라도 에러를 반환하지 않고 다음으로 진행
+        if (err) {
+             console.warn('Optional Auth: 유효하지 않은 토큰 감지 - ', err.message);
+        }
+        next();
+    });
+}
+
+// 두 함수를 함께 export 하도록 수정
+// module.exports = authenticateToken; // 기존 라인 주석 처리 또는 삭제
+module.exports = { authenticateToken, optionalAuthenticateToken };

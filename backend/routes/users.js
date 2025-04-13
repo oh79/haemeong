@@ -1,24 +1,31 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
-const pool = require('../config/db');
-const authenticateToken = require('../middleware/authMiddleware'); // 인증 미들웨어
+// const pool = require('../config/db'); // -> Prisma 사용
+const prisma = require('../lib/prisma'); // 싱글톤 Prisma Client 인스턴스 사용
+const authMiddleware = require('../middleware/authMiddleware');
 
 const router = express.Router();
 const saltRounds = 10;
 
-// GET /api/users/me - 내 정보 조회 (확장용, 현재는 Profile 컴포넌트에서 localStorage 사용 중)
-// 필요하다면 이 API를 구현해서 DB에서 최신 정보를 가져오도록 할 수 있음
-router.get('/me', authenticateToken, async (req, res) => {
+// GET /api/users/me - 내 정보 조회
+router.get('/me', authMiddleware.authenticateToken, async (req, res) => {
     const userId = req.user.userId;
     try {
-        const [users] = await pool.query(
-            'SELECT id, username, email, created_at FROM users WHERE id = ?',
-            [userId]
-        );
-        if (users.length === 0) {
+        // Prisma 사용 (select로 password 제외)
+        const user = await prisma.users.findUnique({
+            where: { id: userId },
+            select: { 
+                id: true, 
+                username: true, 
+                email: true, 
+                created_at: true, 
+                avatarUrl: true, // 스키마 필드 확인
+            } 
+        });
+        if (!user) {
             return res.status(404).json({ message: '사용자를 찾을 수 없습니다.' });
         }
-        res.status(200).json(users[0]);
+        res.status(200).json(user);
     } catch (error) {
         console.error(`사용자 ${userId} 정보 조회 오류:`, error);
         res.status(500).json({ message: '서버 오류가 발생했습니다.' });
@@ -26,93 +33,81 @@ router.get('/me', authenticateToken, async (req, res) => {
 });
 
 
-// PUT /api/users/me - 내 정보 수정 (username, email) (REQ07_PROFILE_02)
-router.put('/me', authenticateToken, async (req, res) => {
+// PUT /api/users/me - 내 정보 수정 (username, email, location, avatarUrl 등)
+router.put('/me', authMiddleware.authenticateToken, async (req, res) => {
     const userId = req.user.userId;
-    const { username, email } = req.body;
+    // 수정 가능한 필드 목록 (요청 본문에서 가져옴)
+    const { username, email, avatarUrl } = req.body;
 
-    // 1. 입력값 검증
-    if ((!username || username.trim() === '') && (!email || email.trim() === '')) {
-        return res.status(400).json({ message: '변경할 사용자 이름 또는 이메일을 입력해주세요.' });
+    // 1. 변경할 데이터 준비 (존재하는 필드만)
+    const dataToUpdate = {};
+    if (username?.trim()) dataToUpdate.username = username.trim();
+    if (email?.trim()) {
+        if (!/\S+@\S+\.\S+/.test(email)) {
+            return res.status(400).json({ message: '유효하지 않은 이메일 형식입니다.' });
+        }
+        dataToUpdate.email = email.trim();
     }
-    // 간단한 이메일 형식 검증 (더 엄격한 검증 필요 시 라이브러리 사용)
-    if (email && !/\S+@\S+\.\S+/.test(email)) {
-        return res.status(400).json({ message: '유효하지 않은 이메일 형식입니다.' });
+    if (avatarUrl?.trim()) dataToUpdate.avatarUrl = avatarUrl.trim(); // 스키마 필드 확인
+
+    // 변경할 내용이 없으면 에러 반환
+    if (Object.keys(dataToUpdate).length === 0) {
+        return res.status(400).json({ message: '변경할 정보가 없습니다.' });
     }
 
-    let connection;
     try {
-        connection = await pool.getConnection();
-        await connection.beginTransaction(); // 트랜잭션 시작
-
         // 2. 변경하려는 username 또는 email 중복 확인 (자기 자신 제외)
-        const updates = {}; // 변경할 필드만 담을 객체
-        const params = [];
-        const conditions = [];
+        if (dataToUpdate.username || dataToUpdate.email) {
+            const orConditions = [];
+            if (dataToUpdate.username) orConditions.push({ username: dataToUpdate.username });
+            if (dataToUpdate.email) orConditions.push({ email: dataToUpdate.email });
 
-        if (username && username.trim() !== '') {
-            updates.username = username.trim();
-            params.push(updates.username);
-            conditions.push('username = ?');
-        }
-        if (email && email.trim() !== '') {
-            updates.email = email.trim();
-            params.push(updates.email);
-            conditions.push('email = ?');
-        }
+            const existingUser = await prisma.users.findFirst({
+                where: {
+                    OR: orConditions,
+                    NOT: { id: userId } // 현재 사용자 제외
+                }
+            });
 
-        if (params.length > 0) {
-            params.push(userId); // 마지막 파라미터는 현재 사용자 ID
-            const checkSql = `SELECT id, username, email FROM users WHERE (${conditions.join(' OR ')}) AND id != ?`;
-            const [existingUsers] = await connection.query(checkSql, params);
-
-            if (existingUsers.length > 0) {
+            if (existingUser) {
                 let message = '';
-                if (updates.username && existingUsers[0].username === updates.username) {
+                if (dataToUpdate.username && existingUser.username === dataToUpdate.username) {
                     message = '이미 사용 중인 사용자 이름입니다.';
                 } else {
                     message = '이미 사용 중인 이메일입니다.';
                 }
-                await connection.rollback(); // 중복 시 롤백
                 return res.status(409).json({ message });
             }
-        } else {
-             await connection.rollback(); // 변경할 내용이 없으면 롤백
-             return res.status(400).json({ message: '변경할 사용자 이름 또는 이메일을 입력해주세요.' });
         }
 
-
-        // 3. 사용자 정보 업데이트
-        const updateSql = 'UPDATE users SET ? WHERE id = ?';
-        await connection.query(updateSql, [updates, userId]);
-
-        await connection.commit(); // 트랜잭션 커밋
-
-        // 4. 수정된 사용자 정보 반환 (password 제외)
-        const [updatedUser] = await connection.query(
-             'SELECT id, username, email, created_at FROM users WHERE id = ?',
-             [userId]
-        );
+        // 3. 사용자 정보 업데이트 (Prisma 사용)
+        const updatedUser = await prisma.users.update({
+            where: { id: userId },
+            data: dataToUpdate,
+            select: { 
+                id: true, username: true, email: true, created_at: true, avatarUrl: true    
+            }
+        });
 
         console.log(`사용자 ${userId} 정보 수정 성공`);
-        res.status(200).json({ message: '정보가 성공적으로 수정되었습니다.', user: updatedUser[0] });
+        res.status(200).json({ message: '정보가 성공적으로 수정되었습니다.', user: updatedUser });
 
     } catch (error) {
-        if (connection) await connection.rollback();
         console.error(`사용자 ${userId} 정보 수정 오류:`, error);
+         // Prisma 에러 코드 처리 (예: P2025 - 업데이트할 레코드 없음)
+        if (error.code === 'P2025') {
+             return res.status(404).json({ message: '사용자를 찾을 수 없습니다.' });
+        }
         res.status(500).json({ message: '서버 오류가 발생했습니다.' });
-    } finally {
-        if (connection) connection.release();
     }
 });
 
 
-// PUT /api/users/me/password - 비밀번호 변경 (REQ07_PROFILE_02)
-router.put('/me/password', authenticateToken, async (req, res) => {
+// PUT /api/users/me/password - 비밀번호 변경
+router.put('/me/password', authMiddleware.authenticateToken, async (req, res) => {
     const userId = req.user.userId;
     const { currentPassword, newPassword } = req.body;
 
-    // 1. 입력값 검증
     if (!currentPassword || !newPassword) {
         return res.status(400).json({ message: '현재 비밀번호와 새 비밀번호를 모두 입력해주세요.' });
     }
@@ -123,61 +118,53 @@ router.put('/me/password', authenticateToken, async (req, res) => {
         return res.status(400).json({ message: '새 비밀번호는 현재 비밀번호와 달라야 합니다.' });
     }
 
-    let connection;
     try {
-        connection = await pool.getConnection();
-
-        // 2. 현재 비밀번호 확인
-        const [users] = await connection.query('SELECT password FROM users WHERE id = ?', [userId]);
-        if (users.length === 0) {
-            return res.status(404).json({ message: '사용자를 찾을 수 없습니다.' }); // 비정상 케이스
+        // 2. 현재 사용자 정보 가져오기 (비밀번호 포함)
+        const user = await prisma.users.findUnique({ where: { id: userId } });
+        if (!user) {
+            return res.status(404).json({ message: '사용자를 찾을 수 없습니다.' }); 
         }
-        const user = users[0];
-        const isMatch = await bcrypt.compare(currentPassword, user.password);
 
+        // 현재 비밀번호 확인
+        const isMatch = await bcrypt.compare(currentPassword, user.password);
         if (!isMatch) {
             return res.status(401).json({ message: '현재 비밀번호가 올바르지 않습니다.' });
         }
 
-        // 3. 새 비밀번호 해싱 및 업데이트
+        // 3. 새 비밀번호 해싱 및 업데이트 (Prisma 사용)
         const hashedNewPassword = await bcrypt.hash(newPassword, saltRounds);
-        await connection.query(
-            'UPDATE users SET password = ? WHERE id = ?',
-            [hashedNewPassword, userId]
-        );
+        await prisma.users.update({
+            where: { id: userId },
+            data: { password: hashedNewPassword }
+        });
 
         console.log(`사용자 ${userId} 비밀번호 변경 성공`);
         res.status(200).json({ message: '비밀번호가 성공적으로 변경되었습니다.' });
 
     } catch (error) {
         console.error(`사용자 ${userId} 비밀번호 변경 오류:`, error);
+         if (error.code === 'P2025') {
+             return res.status(404).json({ message: '사용자를 찾을 수 없습니다.' });
+        }
         res.status(500).json({ message: '서버 오류가 발생했습니다.' });
-    } finally {
-        if (connection) connection.release();
     }
 });
 
-// +++ POST /api/users/me/verify-password - 현재 비밀번호 확인 +++
-router.post('/me/verify-password', authenticateToken, async (req, res) => {
+// POST /api/users/me/verify-password - 현재 비밀번호 확인
+router.post('/me/verify-password', authMiddleware.authenticateToken, async (req, res) => {
     const userId = req.user.userId;
     const { password } = req.body;
 
-    // 1. 입력값 검증
     if (!password) {
         return res.status(400).json({ message: '비밀번호를 입력해주세요.' });
     }
 
-    let connection;
     try {
-        connection = await pool.getConnection();
-
-        // 2. 데이터베이스에서 사용자 비밀번호 조회
-        const [users] = await connection.query('SELECT password FROM users WHERE id = ?', [userId]);
-        if (users.length === 0) {
-            // 이론적으로 authenticateToken을 통과했으면 발생하기 어려움
+        // 2. 사용자 정보 조회 (Prisma 사용)
+        const user = await prisma.users.findUnique({ where: { id: userId } });
+        if (!user) {
             return res.status(404).json({ message: '사용자를 찾을 수 없습니다.' });
         }
-        const user = users[0];
 
         // 3. 입력된 비밀번호와 저장된 해시 비밀번호 비교
         const isMatch = await bcrypt.compare(password, user.password);
@@ -187,17 +174,13 @@ router.post('/me/verify-password', authenticateToken, async (req, res) => {
             return res.status(401).json({ message: '비밀번호가 올바르지 않습니다.' });
         }
 
-        // 4. 비밀번호 일치 시 성공 응답
         console.log(`사용자 ${userId} 비밀번호 확인 성공`);
         res.status(200).json({ message: '비밀번호가 확인되었습니다.' });
 
     } catch (error) {
         console.error(`사용자 ${userId} 비밀번호 확인 오류:`, error);
         res.status(500).json({ message: '서버 오류가 발생했습니다.' });
-    } finally {
-        if (connection) connection.release();
     }
 });
-// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 module.exports = router;

@@ -1,5 +1,6 @@
 generator client {
   provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
 }
 
 datasource db {
@@ -55,8 +56,19 @@ model posts {
   likes      likes[]
   users      users      @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "posts_ibfk_1")
   scraps     scraps[]
+  images     post_images[]
 
   @@index([user_id], map: "user_id")
+}
+
+model post_images {
+  id         Int       @id @default(autoincrement())
+  url        String    @db.VarChar(2048)
+  post_id    Int
+  created_at DateTime? @default(now()) @db.Timestamp(0)
+  posts      posts     @relation(fields: [post_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "post_images_ibfk_1")
+
+  @@index([post_id], map: "post_id")
 }
 
 model scraps {
@@ -77,6 +89,7 @@ model users {
   email      String     @unique(map: "email") @db.VarChar(100)
   password   String     @db.VarChar(255)
   created_at DateTime?  @default(now()) @db.Timestamp(0)
+  avatarUrl  String?    @db.VarChar(2048)
   comments   comments[]
   dreams     dreams[]
   likes      likes[]
