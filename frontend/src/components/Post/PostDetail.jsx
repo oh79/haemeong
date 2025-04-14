@@ -89,6 +89,7 @@ function PostDetail() {
     if (token && isLoggedIn) { // isLoggedIn 조건 추가
         headers.Authorization = `Bearer ${token}`;
     }
+    headers['ngrok-skip-browser-warning'] = 'true'; // ngrok 경고 건너뛰기 헤더 추가
 
     try {
       // headers 객체를 axios 요청에 포함

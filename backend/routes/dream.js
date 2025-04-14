@@ -4,7 +4,7 @@ const authMiddleware = require('../middleware/authMiddleware'); // 인증 미들
 const { OpenAI } = require('openai'); // OpenAI 라이브러리 수정 (구조 변경 대응)
 const path = require('path');
 
-console.log("--- dreams.js 라우터 파일 로딩됨 ---"); // <--- 이 로그 추가
+// console.log("--- dreams.js 라우터 파일 로딩됨 ---"); // <--- 이 로그 추가
 const router = express.Router();
 
 // OpenAI 클라이언트 초기화 (API 키는 환경 변수에서 자동으로 로드됨)
@@ -15,8 +15,10 @@ router.post('/', authMiddleware.authenticateToken, async (req, res) => {
     const { title, dream_content } = req.body;
     const userId = req.user.userId;
 
+    // console.log('[Dream Interpretation Request] User:', userId, 'Title:', title); // 요청 로그 추가
+
     // --- userId 변수가 제대로 할당되었는지 확인 (디버깅용) ---
-    console.log("Extracted User ID:", userId);
+    // console.log("Extracted User ID:", userId);
     if (!userId) {
         console.error("Error: User ID is missing after authentication.");
         return res.status(500).json({ message: '인증 처리 중 사용자 ID를 가져오지 못했습니다.' });
@@ -62,17 +64,17 @@ JSON 응답 예시:
         // ---------------------------------
 
         // AI 모델 호출 (JSON 응답 형식 지정)
-        console.log("--- OpenAI API 요청 시작 ---");
+        // console.log("--- OpenAI API 요청 시작 ---");
         const completion = await openai.chat.completions.create({
             model: "gpt-3.5-turbo-0125", // JSON 모드 지원 모델 확인 (최신 버전 권장)
             messages: [{ role: "user", content: prompt }],
             response_format: { type: "json_object" },
             // max_tokens: 1000, // 필요시 토큰 제한 설정
         });
-        console.log("--- OpenAI API 응답 수신 ---");
+        // console.log("--- OpenAI API 응답 수신 ---");
 
         const interpretationJsonString = completion.choices[0].message.content.trim();
-        console.log("Raw JSON String from OpenAI:", interpretationJsonString);
+        // console.log("Raw JSON String from OpenAI:", interpretationJsonString);
 
         // --- DB 저장 로직 (Prisma 사용) ---
         const newDream = await prisma.dreams.create({
@@ -83,7 +85,7 @@ JSON 응답 예시:
                 interpretation: interpretationJsonString, // JSON 문자열 저장
             }
         });
-        console.log(`--- Dream ${newDream.id} 저장 완료 ---`);
+        // console.log(`--- Dream ${newDream.id} 저장 완료 ---`);
         // ------------------------------------------
 
         // --- 응답 전송 (파싱된 JSON 객체 전송) ---
@@ -97,7 +99,7 @@ JSON 응답 예시:
                     interpretation: parsedInterpretation // 파싱된 객체
                 }
             });
-            console.log("--- 클라이언트에 파싱된 JSON 응답 전송 ---");
+            // console.log("--- 클라이언트에 파싱된 JSON 응답 전송 ---");
         } catch (parseError) {
              console.error('Error parsing JSON from OpenAI:', parseError);
              console.error('Invalid JSON string was:', interpretationJsonString);
@@ -113,10 +115,10 @@ JSON 응답 예시:
 
 // GET /api/dreams/my - 내 해몽 기록 조회 (인증 필요)
 router.get('/my', authMiddleware.authenticateToken, async (req, res) => {
-    console.log("--- GET /api/dreams/my 요청 수신 ---"); // 로그 유지
+    // console.log("--- GET /api/dreams/my 요청 수신 --- "); // 기존 로그 수정
     const userId = req.user.userId;
 
-    console.log(`Fetching dreams for user ID: ${userId}`);
+    // console.log(`[Fetch My Dreams] User ID: ${userId}`); // 로그 강화
 
     try {
         // Prisma 사용, interpretation 필드도 가져옴
@@ -138,7 +140,7 @@ router.get('/my', authMiddleware.authenticateToken, async (req, res) => {
             return { ...dream, interpretation: parsedInterpretation }; // 파싱된 결과 또는 null로 교체
         });
         
-        console.log(`Found ${dreams.length} dreams for user ${userId}`);
+        // console.log(`Found ${dreams.length} dreams for user ${userId}`);
         res.status(200).json(formattedDreams);
     } catch (error) {
         console.error('Error fetching user dreams:', error);
@@ -169,12 +171,13 @@ router.get('/me', authMiddleware.authenticateToken, async (req, res) => {
 // GET /api/dreams/:dreamId - 특정 꿈 상세 조회 (선택적 인증)
 router.get('/:dreamId', authMiddleware.optionalAuthenticateToken, async (req, res) => { // 이제 '/my'나 '/me'가 먼저 처리됨
     const dreamId = parseInt(req.params.dreamId, 10);
+    const userId = req.user?.userId; // 사용자 ID 가져오기 (선택적)
+
     if (isNaN(dreamId)) {
         return res.status(400).json({ message: '잘못된 꿈 ID 형식입니다.' });
     }
-    // const userId = req.user?.userId; // 상세 조회에서는 현재 불필요
 
-    console.log(`--- GET /api/dreams/:dreamId (${dreamId}) 요청 수신 ---`); // 확인용 로그
+    // console.log(`[Fetch Dream Detail] Dream ID: ${dreamId}, User ID: ${userId || 'Guest'}`); // 로그 강화
 
     try {
         // Prisma 사용, 사용자 정보도 함께 가져옴
@@ -190,26 +193,30 @@ router.get('/:dreamId', authMiddleware.optionalAuthenticateToken, async (req, re
         }
 
         // interpretation 필드를 JSON으로 파싱
-        let parsedInterpretation = null;
+        let parsedInterpretation = {};
         try {
-            if (dream.interpretation) {
+            // dream.interpretation 값이 문자열인 경우에만 파싱
+            if (dream.interpretation && typeof dream.interpretation === 'string') {
                 parsedInterpretation = JSON.parse(dream.interpretation);
+            // 이미 객체인 경우 그대로 사용
+            } else if (dream.interpretation && typeof dream.interpretation === 'object') {
+                parsedInterpretation = dream.interpretation;
             }
-            // 파싱된 interpretation과 사용자 이름 포함 응답
-            res.status(200).json({ 
-                id: dream.id,
-                user_id: dream.user_id,
-                username: dream.users.username, // user -> users
-                title: dream.title,
-                dream_content: dream.dream_content, 
-                interpretation: parsedInterpretation, // 파싱된 결과
-                created_at: dream.created_at 
-            });
         } catch (parseError) {
-            console.error(`Error parsing interpretation JSON for dream ${dreamId}:`, parseError);
-            console.error('Invalid JSON string in DB was:', dream.interpretation);
-            res.status(200).json({ ...dream, interpretation: null, username: dream.users.username }); // user -> users
+            console.error("Interpretation JSON 파싱 오류:", parseError, dream.interpretation);
+            // 파싱 오류 시 빈 객체로 유지
         }
+
+        // 파싱된 interpretation과 사용자 이름 포함 응답
+        res.status(200).json({ 
+            id: dream.id,
+            user_id: dream.user_id,
+            username: dream.users.username, // user -> users
+            title: dream.title,
+            dream_content: dream.dream_content, 
+            interpretation: parsedInterpretation, // 파싱된 결과
+            created_at: dream.created_at 
+        });
 
     } catch (error) {
         console.error(`꿈 ${dreamId} 상세 조회 중 오류:`, error);

@@ -25,10 +25,21 @@ const getDreamTypeColorScheme = (dreamType) => {
 
 function InterpretationDisplay({ interpretationData }) {
 
-  // interpretationData가 없거나 객체가 아닌 경우 처리
-  if (!interpretationData || typeof interpretationData !== 'object') {
-    console.error('Invalid interpretationData prop:', interpretationData);
-    // interpretationData가 null이면 (백엔드 파싱 실패 등) 조용한 에러 표시
+  // interpretationData가 undefined인 경우 즉시 에러 처리
+  if (interpretationData === undefined) {
+    console.error('InterpretationData prop is undefined.');
+    return (
+      <Alert status="error">
+        <AlertIcon />
+        해몽 결과를 표시할 수 없습니다. (데이터 누락)
+      </Alert>
+    );
+  }
+
+  // interpretationData가 null이거나 객체가 아닌 경우 처리
+  if (interpretationData === null || typeof interpretationData !== 'object') {
+    console.error('Invalid interpretationData prop (null or not an object):', interpretationData);
+    // null이면 (백엔드 파싱 실패 등) 조용한 에러 표시
     if (interpretationData === null) {
         return (
          <Alert status="warning" variant="subtle">

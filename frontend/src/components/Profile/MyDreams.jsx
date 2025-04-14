@@ -80,8 +80,12 @@ function MyDreams() {
             // interpretation 필드를 JSON으로 파싱
             let parsedInterpretation = {};
             try {
-              if (dream.interpretation) {
+              // dream.interpretation 값이 문자열인 경우에만 파싱
+              if (dream.interpretation && typeof dream.interpretation === 'string') {
                 parsedInterpretation = JSON.parse(dream.interpretation);
+              // 이미 객체인 경우 그대로 사용
+              } else if (dream.interpretation && typeof dream.interpretation === 'object') {
+                parsedInterpretation = dream.interpretation;
               }
             } catch (parseError) {
               console.error("Interpretation JSON 파싱 오류:", parseError, dream.interpretation);

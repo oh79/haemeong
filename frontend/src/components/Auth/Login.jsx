@@ -84,7 +84,7 @@ function Login() {
       <Box as="form" onSubmit={handleSubmit}>
         <VStack spacing={5}> {/* VStack으로 폼 요소 배치 */}
           <FormControl id="login-username" isRequired isDisabled={loading}>
-            <FormLabel>사용자 이름</FormLabel>
+            <FormLabel>사용자 아이디</FormLabel>
             <Input
               type="text"
               name="username"

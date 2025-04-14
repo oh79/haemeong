@@ -29,6 +29,7 @@ import {
 } from '@chakra-ui/react';
 // 아이콘 추가
 import { AddIcon, EditIcon, SearchIcon } from '@chakra-ui/icons'; // EditIcon 추가 (데스크탑 버튼용), SearchIcon 추가
+import defaultImage from '../../assets/cha_v2_nobg.png'; // 이미지 import 추가
 
 function Board() {
   const [posts, setPosts] = useState([]); // 게시글 목록 상태
@@ -187,11 +188,11 @@ function Board() {
                          boxSize={{ base: "70px", md: "80px" }}
                          objectFit="cover"
                          borderRadius="md"
-                         fallbackSrc='/cha_v2_scalup.png'
+                         fallbackSrc={defaultImage}
                        />
                     ) : (
                       <Image
-                        src='/cha_v2_scalup.png'
+                        src={defaultImage}
                         alt="기본 이미지"
                         boxSize={{ base: "70px", md: "80px" }}
                         objectFit="cover"

@@ -170,11 +170,9 @@ router.post('/me/verify-password', authMiddleware.authenticateToken, async (req,
         const isMatch = await bcrypt.compare(password, user.password);
 
         if (!isMatch) {
-            console.log(`사용자 ${userId} 비밀번호 확인 실패`);
             return res.status(401).json({ message: '비밀번호가 올바르지 않습니다.' });
         }
 
-        console.log(`사용자 ${userId} 비밀번호 확인 성공`);
         res.status(200).json({ message: '비밀번호가 확인되었습니다.' });
 
     } catch (error) {

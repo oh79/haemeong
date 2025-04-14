@@ -27,9 +27,15 @@ function DreamDetail() {
         }
 
         // 백엔드 API 호출 (GET /api/dreams/:dreamId)
-        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/dreams/${dreamId}`, {
-          headers: { Authorization: `Bearer ${token}` }
+        const apiUrl = `${import.meta.env.VITE_API_BASE_URL}/api/dreams/${dreamId}`;
+        console.log('요청 URL:', apiUrl); // 요청 URL 확인
+        const response = await axios.get(apiUrl, {
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            'ngrok-skip-browser-warning': 'true' // ngrok 경고 건너뛰기 헤더 추가
+          }
         });
+        console.log('API 응답 데이터:', response.data); // 응답 데이터 확인
         setDream(response.data);
 
       } catch (err) {

@@ -82,7 +82,7 @@ function Signup() {
       <Box as="form" onSubmit={handleSubmit}>
         <VStack spacing={5}>
           <FormControl id="signup-username" isRequired isDisabled={loading}>
-            <FormLabel>사용자 이름</FormLabel>
+            <FormLabel>사용자 아이디</FormLabel>
             <Input type="text" name="username" value={formData.username} onChange={handleChange} focusBorderColor="teal.400"/>
           </FormControl>
 

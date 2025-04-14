@@ -47,14 +47,8 @@ const upload = multer({
 
 // GET /api/posts - 게시글 목록 조회 (첫 번째 이미지 URL 포함)
 router.get('/', async (req, res) => {
-    console.log("[posts.js GET /] Handler entered"); // 핸들러 진입 로그
-    console.log("[posts.js GET /] typeof prisma:", typeof prisma); // prisma 타입 확인
-    console.log("[posts.js GET /] prisma object keys:", prisma ? Object.keys(prisma) : 'prisma is null or undefined'); // prisma 객체 키 확인
-    console.log("[posts.js GET /] typeof prisma.posts:", typeof prisma?.posts); // prisma.posts 타입 확인
-
     const searchQuery = req.query.search || '';
     try {
-        console.log("[posts.js GET /] Attempting prisma.posts.findMany..."); // post -> posts
         const posts = await prisma.posts.findMany({ // post -> posts
             where: {
                 OR: [
@@ -75,7 +69,6 @@ router.get('/', async (req, res) => {
             },
             orderBy: { created_at: 'desc' },
         });
-        console.log("[posts.js GET /] prisma.posts.findMany successful"); // post -> posts
 
         // 각 post 객체에 imageUrl 추가 및 카운트 필드 이름 변경 (안정성 강화)
         const formattedPosts = posts.map(post => ({
@@ -100,11 +93,6 @@ router.get('/', async (req, res) => {
 // POST /api/posts - 새 게시글 작성 (이미지 업로드 포함)
 // upload.array('images', 5) -> 'images' 필드 이름으로 최대 5개 파일 받음
 router.post('/', authMiddleware.authenticateToken, upload.array('images', 5), async (req, res) => {
-    console.log("[posts.js POST /] Handler entered"); // 핸들러 진입 로그
-    console.log("[posts.js POST /] typeof prisma:", typeof prisma); // prisma 타입 확인
-    console.log("[posts.js POST /] prisma object keys:", prisma ? Object.keys(prisma) : 'prisma is null or undefined'); // prisma 객체 키 확인
-    console.log("[posts.js POST /] typeof prisma.posts:", typeof prisma?.posts); // prisma.posts 타입 확인
-
     const { title, content } = req.body;
     const userId = req.user?.userId; // 옵셔널 체이닝 추가
     const files = req.files; // 업로드된 파일 정보 배열
@@ -384,7 +372,6 @@ router.post('/:postId/comments', authMiddleware.authenticateToken, async (req, r
             username: newComment.users.username,
         };
 
-        console.log(`게시글 ${postId}에 새 댓글 작성 성공:`, { id: newComment.id, userId });
         res.status(201).json(responseData);
 
     } catch (error) {
@@ -437,8 +424,6 @@ router.put('/:postId/comments/:commentId', authMiddleware.authenticateToken, asy
             username: updatedComment.users.username,
         };
 
-
-        console.log(`댓글 ${commentId} (게시글 ${postId}) 수정 성공:`, { userId });
         res.status(200).json(responseData);
 
     } catch (error) {
@@ -481,7 +466,6 @@ router.delete('/:postId/comments/:commentId', authMiddleware.authenticateToken, 
             where: { id: commentId }
         });
 
-        console.log(`댓글 ${commentId} (게시글 ${postId}) 삭제 성공:`, { userId });
         res.status(200).json({ message: '댓글이 성공적으로 삭제되었습니다.' });
 
     } catch (error) {
@@ -518,7 +502,7 @@ router.post('/:postId/like', authMiddleware.authenticateToken, async (req, res) 
             await prisma.likes.delete({
                 where: { user_id_post_id: { user_id: userId, post_id: postId } }
             });
-            console.log(`사용자 ${userId}가 게시글 ${postId} 좋아요 취소`);
+            console.log(`[Post Unlike] User ${userId} unliked Post ${postId}`); // 좋아요 취소 로그
             // 현재 좋아요 수 다시 계산
             const likeCount = await prisma.likes.count({ where: { post_id: postId } });
             res.status(200).json({ liked: false, likeCount });
@@ -527,7 +511,7 @@ router.post('/:postId/like', authMiddleware.authenticateToken, async (req, res) 
             await prisma.likes.create({
                 data: { user_id: userId, post_id: postId }
             });
-            console.log(`사용자 ${userId}가 게시글 ${postId} 좋아요 추가`);
+            console.log(`[Post Like] User ${userId} liked Post ${postId}`); // 좋아요 추가 로그
             // 현재 좋아요 수 다시 계산
             const likeCount = await prisma.likes.count({ where: { post_id: postId } });
             res.status(201).json({ liked: true, likeCount }); // 201 Created 또는 200 OK 사용 가능
@@ -572,14 +556,14 @@ router.post('/:postId/scrap', authMiddleware.authenticateToken, async (req, res)
             await prisma.scraps.delete({
                 where: { user_id_post_id: { user_id: userId, post_id: postId } }
             });
-            console.log(`사용자 ${userId}가 게시글 ${postId} 스크랩 취소`);
+            console.log(`[Post Unscrap] User ${userId} unscrapped Post ${postId}`); // 스크랩 취소 로그
             res.status(200).json({ scrapped: false });
         } else {
             // 스크랩 추가
             await prisma.scraps.create({
                 data: { user_id: userId, post_id: postId }
             });
-            console.log(`사용자 ${userId}가 게시글 ${postId} 스크랩 추가`);
+            console.log(`[Post Scrap] User ${userId} scrapped Post ${postId}`); // 스크랩 추가 로그
             res.status(201).json({ scrapped: true }); // 201 Created 또는 200 OK 사용 가능
         }
     } catch (error) {

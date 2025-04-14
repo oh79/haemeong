@@ -5,6 +5,7 @@ require('dotenv').config();
 
 const express = require('express');
 const cors = require('cors');
+const morgan = require('morgan'); // morgan 추가
 const path = require('path'); // path 모듈 추가
 // const pool = require('./config/db'); // !!! Prisma 사용으로 제거 !!!
 const authRoutes = require('./routes/auth'); // auth 라우트 가져오기 (추가)
@@ -18,12 +19,15 @@ const PORT = process.env.PORT || 5000; // 환경 변수에서 포트를 가져�
 
 // CORS 미들웨어 설정 수정
 const corsOptions = {
-  origin: 'https://407b-220-149-255-9.ngrok-free.app', // 프론트엔드 ngrok 주소 명시적 허용
+  origin: process.env.FRONTEND_URL || 'http://localhost:3000', // .env 에서 프론트엔드 URL 가져오기 (없으면 로컬 개발 기본값)
   methods: "GET,HEAD,PUT,PATCH,POST,DELETE", // 허용할 HTTP 메소드
   credentials: true, // 인증 정보(쿠키, Authorization 헤더 등) 허용
   optionsSuccessStatus: 204 // Preflight 요청 성공 상태 코드
 };
 app.use(cors(corsOptions)); // 수정된 옵션으로 cors 사용
+
+// HTTP 요청 로깅 미들웨어 (morgan)
+app.use(morgan('dev')); // morgan 미들웨어 추가
 
 // 요청 본문을 JSON으로 파싱하기 위한 미들웨어
 app.use(express.json());

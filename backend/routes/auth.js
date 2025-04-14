@@ -24,7 +24,7 @@ router.post('/signup', async (req, res) => {
 
   try {
     // 3. 사용자 이름 또는 이메일 중복 확인 (Prisma 사용)
-    console.log('[/signup] Checking for existing user...');
+    // console.log('[/signup] Checking for existing user...');
     // console.log('[/signup] typeof prisma:', typeof prisma); // 디버깅용 로그 제거
     // console.log('[/signup] prisma object keys:', prisma ? Object.keys(prisma) : 'prisma is null/undefined'); // 디버깅용 로그 제거
 
@@ -59,7 +59,7 @@ router.post('/signup', async (req, res) => {
       },
     });
 
-    console.log('회원가입 성공:', { id: newUser.id, username, email }); // 서버 로그
+    console.log('[Signup Success] User created:', { id: newUser.id, username, email }); // 로그 강화
 
     // 6. 성공 응답 전송
     res.status(201).json({ message: '회원가입이 성공적으로 완료되었습니다.' }); // 201 Created: 리소스 생성됨
@@ -108,7 +108,7 @@ router.post('/login', async (req, res) => {
 
     const token = jwt.sign(payload, secretKey, options);
 
-    console.log('로그인 성공:', { username: user.username });
+    console.log('[Login Success] User logged in:', { username: user.username }); // 로그 강화
 
     // 7. 생성된 토큰과 함께 성공 응답 전송
     res.status(200).json({
