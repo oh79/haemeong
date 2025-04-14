@@ -597,49 +597,6 @@ router.delete('/:postId/scrap', authMiddleware.authenticateToken, async (req, re
 */
 
 
-// GET /api/scraps/me - 내가 스크랩한 글 목록 조회 (인증 필요)
-// 이 라우트는 별도 파일 (예: scraps.js)로 분리하는 것이 좋음
-router.get('/scraps/me', authMiddleware.authenticateToken, async (req, res) => {
-    // 경고: 이 라우트는 /api/posts/scraps/me 로 접근하게 되므로 경로 수정 필요
-    // TODO: 라우터를 분리하고 경로를 /api/scraps/me 로 변경하세요.
-    const userId = req.user?.userId; // 옵셔널 체이닝
-
-    if (!userId) {
-        // authenticateToken 미들웨어에서 이미 처리했겠지만, 방어 코드 추가
-        return res.status(401).json({ message: '스크랩 목록을 보려면 로그인이 필요합니다.' });
-    }
-
-    try {
-        const scrappedPosts = await prisma.scraps.findMany({
-            where: { user_id: userId },
-            select: { // 스크랩 정보와 함께 연결된 게시글 정보 선택
-                created_at: true, // 스크랩한 시간
-                posts: {
-                    select: {
-                        id: true,
-                        title: true,
-                        created_at: true, // 게시글 생성 시간
-                        users: { select: { username: true } } // 게시글 작성자
-                        // 필요시 추가 정보 (예: 첫 이미지)
-                    }
-                }
-            },
-            orderBy: { created_at: 'desc' } // 스크랩한 시간 순 정렬
-        });
-
-        // 데이터 형식 가공 (프론트엔드 필요에 맞게)
-        const responseData = scrappedPosts.map(scrap => ({
-            scrappedAt: scrap.created_at,
-            ...scrap.posts, // posts 모델 확인
-            username: scrap.posts.users?.username || '익명' // posts 및 users 모델 확인
-        }));
-
-        res.status(200).json(responseData);
-    } catch (error) {
-        console.error(`사용자 ${userId}의 스크랩 목록 조회 중 오류:`, error); // 전체 에러 로깅
-        res.status(500).json({ message: '서버 오류가 발생했습니다.' });
-    }
-});
-
+// GET /api/scraps/me 라우트는 scraps.js 로 이동되었으므로 삭제
 
 module.exports = router;

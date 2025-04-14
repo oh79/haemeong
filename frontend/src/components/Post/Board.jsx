@@ -45,8 +45,12 @@ function Board() {
     setLoading(true);
     setMessage('');
     try {
-      // API 호출 시 search 쿼리 파라미터 추가
-      const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/posts?search=${encodeURIComponent(searchQuery)}`);
+      // API 호출 시 search 쿼리 파라미터 추가 및 헤더 추가
+      const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/posts?search=${encodeURIComponent(searchQuery)}`, {
+        headers: { // 헤더 객체 추가
+          'ngrok-skip-browser-warning': 'true'
+        }
+      });
       setPosts(response.data);
     } catch (error) {
       console.error('게시글 목록 로딩 오류:', error);
@@ -161,7 +165,7 @@ function Board() {
       {/* 게시글 카드 목록 */} 
       {!loading && !message && (
         <VStack spacing={0} align="stretch"> {/* 카드 사이 간격 제거, 수직 정렬 */}
-          {posts.length > 0 ? (
+          {Array.isArray(posts) && posts.length > 0 ? (
             posts.map(post => (
               <ChakraLink
                 as={RouterLink}
@@ -220,7 +224,9 @@ function Board() {
           ) : (
              <Flex justify="center" align="center" minHeight="200px">
                <Text color="gray.500">
-                 {currentSearch ? `'${currentSearch}'에 대한 검색 결과가 없습니다.` : '아직 게시글이 없어요.'}
+                 {!Array.isArray(posts) ? "게시글 데이터를 불러오는 데 문제가 발생했습니다." :
+                  currentSearch ? `'${currentSearch}'에 대한 검색 결과가 없습니다.` : '아직 게시글이 없어요.'
+                 }
                </Text>
              </Flex>
           )}

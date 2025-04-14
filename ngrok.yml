@@ -1,0 +1,11 @@
+version: 2
+# 만약 ngrok 계정에 로그인했다면 authtoken이 있을 수 있어. 없으면 이 줄은 생략 가능.
+authtoken: 2nWaA1Dh1Qweu4SSf2nGDlU0EOe_Y4DXySDbjWihJ2gxpdTL
+
+tunnels:
+  backend: # 백엔드 서비스용 터널 (이름은 아무거나 가능)
+    proto: http
+    addr: 5000 # 백엔드 포트 번호
+  frontend: # 프론트엔드 서비스용 터널 (이름은 아무거나 가능)
+    proto: http
+    addr: 3000 # 프론트엔드 포트 번호 (만약 5173 등 다른 번호면 그걸로 수정)

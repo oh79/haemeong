@@ -43,8 +43,11 @@ function MyScraps() {
       if (!token) {
         throw new Error('로그인이 필요합니다.'); // 로그인 필요 에러 발생
       }
-      const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/posts/scraps/me`, {
-        headers: { Authorization: `Bearer ${token}` } // 명시적으로 헤더 추가 (axios 기본값에 의존하지 않음)
+      const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/scraps/me`, {
+        headers: { 
+          Authorization: `Bearer ${token}`, // 명시적으로 헤더 추가 (axios 기본값에 의존하지 않음)
+          'ngrok-skip-browser-warning': 'true' // 헤더 추가
+        }
       });
       setScrappedPosts(response.data);
     } catch (err) {
@@ -105,7 +108,7 @@ function MyScraps() {
             </Tr>
           </Thead>
           <Tbody>
-            {scrappedPosts.length > 0 ? (
+            {!loading && !error && Array.isArray(scrappedPosts) && scrappedPosts.length > 0 ? (
               scrappedPosts.map(post => (
                 <Tr key={post.id}>
                   <Td>
@@ -119,14 +122,23 @@ function MyScraps() {
                   <Td isNumeric>{formatDate(post.created_at)}</Td>
                 </Tr>
               ))
-            ) : (
+            ) : !loading && !error && Array.isArray(scrappedPosts) && scrappedPosts.length === 0 ? (
               <Tr>
                  {/* colSpan 값은 보이는 열의 개수에 맞게 조정 (Board.jsx 와 동일하게) */}
                  <Td colSpan={{ base: 2, sm: 3 }} textAlign="center" py={10}>
                    <Text color="gray.500">스크랩한 게시글이 없습니다.</Text>
                  </Td>
               </Tr>
-            )}
+            ) : !loading && !error && !Array.isArray(scrappedPosts) ? (
+              <Tr>
+                <Td colSpan={{ base: 2, sm: 3 }} textAlign="center" py={10}>
+                  <Alert status="warning" variant="subtle">
+                    <AlertIcon />
+                    스크랩 목록 데이터를 불러오는 데 문제가 발생했습니다.
+                  </Alert>
+                </Td>
+              </Tr>
+            ) : null}
           </Tbody>
         </Table>
       </TableContainer>

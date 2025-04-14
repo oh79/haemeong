@@ -24,7 +24,10 @@ function MyDreams() {
         }
 
         const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/dreams/my`, {
-          headers: { Authorization: `Bearer ${token}` }
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            'ngrok-skip-browser-warning': 'true'
+          }
         });
         setMyDreams(response.data);
       } catch (err) {
@@ -64,9 +67,14 @@ function MyDreams() {
   return (
     <Box>
       <Heading as="h2" size="xl" mb={6} textAlign="center">나의 꿈 해몽 기록</Heading>
-      {myDreams.length === 0 ? (
+      {!loading && !error && Array.isArray(myDreams) && myDreams.length === 0 ? (
         <Text textAlign="center">아직 저장된 꿈 해몽 기록이 없습니다.</Text>
-      ) : (
+      ) : !loading && !error && !Array.isArray(myDreams) ? (
+        <Alert status="warning">
+          <AlertIcon />
+          꿈 해몽 기록 데이터를 불러오는 데 문제가 발생했습니다.
+        </Alert>
+      ) : !loading && !error ? (
         <List spacing={5}>
           {myDreams.map((dream) => {
             // interpretation 필드를 JSON으로 파싱
@@ -117,7 +125,7 @@ function MyDreams() {
             );
           })}
         </List>
-      )}
+      ) : null}
     </Box>
   );
 }

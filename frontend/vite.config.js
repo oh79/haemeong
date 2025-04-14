@@ -7,6 +7,7 @@ export default defineConfig({
   server: {
     host: '0.0.0.0', // 모든 외부 IP에서 접근 가능
     port: 3000,
+    allowedHosts: ['407b-220-149-255-9.ngrok-free.app'],
     watch: {
       usePolling: true,
     },

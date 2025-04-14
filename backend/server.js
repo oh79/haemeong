@@ -11,13 +11,19 @@ const authRoutes = require('./routes/auth'); // auth 라우트 가져오기 (추
 const dreamRoutes = require('./routes/dream'); // dream 라우트 가져오기 (추가)
 const postRoutes = require('./routes/posts'); // post 라우트 가져오기 (추가)
 const userRoutes = require('./routes/users'); // user 라우트 가져오기 (추가)
+const scrapRoutes = require('./routes/scraps'); // scrap 라우트 추가
 
 const app = express();
 const PORT = process.env.PORT || 5000; // 환경 변수에서 포트를 가져오거나 기본값 5000 사용
 
-// CORS 미들웨어 설정 (모든 출처 허용 - 개발 단계)
-// 실제 배포 시에는 프론트엔드 주소만 허용하도록 설정 변경 필요
-app.use(cors());
+// CORS 미들웨어 설정 수정
+const corsOptions = {
+  origin: 'https://407b-220-149-255-9.ngrok-free.app', // 프론트엔드 ngrok 주소 명시적 허용
+  methods: "GET,HEAD,PUT,PATCH,POST,DELETE", // 허용할 HTTP 메소드
+  credentials: true, // 인증 정보(쿠키, Authorization 헤더 등) 허용
+  optionsSuccessStatus: 204 // Preflight 요청 성공 상태 코드
+};
+app.use(cors(corsOptions)); // 수정된 옵션으로 cors 사용
 
 // 요청 본문을 JSON으로 파싱하기 위한 미들웨어
 app.use(express.json());
@@ -43,6 +49,9 @@ app.use('/api/posts', postRoutes);
 
 // 사용자 관련 라우트 (추가)
 app.use('/api/users', userRoutes);
+
+// 스크랩 관련 라우트 연결 (추가)
+app.use('/api/scraps', scrapRoutes);
 
 // 서버 시작
 app.listen(PORT, '0.0.0.0', () =>  {
