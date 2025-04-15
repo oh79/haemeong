@@ -7,6 +7,8 @@ services:
       dockerfile: Dockerfile
     ports:
       - "3000:3000"
+    networks:
+      - shared_net
     # 로컬 폴더 바인드 (개발 편의)
     # node_modules 충돌 방지를 위해 아래처럼 마운트
     volumes:
@@ -22,6 +24,9 @@ services:
       dockerfile: Dockerfile
     ports:
       - "5000:5000"
+    networks:
+      - backend
+      - shared_net
     depends_on:
       mysql:
         condition: service_healthy
@@ -35,8 +40,10 @@ services:
 
   mysql:
     image: mysql:8.0
-    ports:
-      - "3307:3306"
+    # ports:
+      # - "3307:3306" #TODO: 배포 시에 삭제
+    networks:
+      - backend
     env_file:
       - ./backend/.env
     volumes:
