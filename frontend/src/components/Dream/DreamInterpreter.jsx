@@ -24,8 +24,17 @@ import {
   Flex,    // Flex 추가
   HStack, // HStack 유지
   Divider, // Divider 추가
-  Card, CardHeader, CardBody // Card 관련 컴포넌트 추가
+  Card, CardHeader, CardBody, // Card 관련 컴포넌트 추가
+  SimpleGrid, Image, Stack, CardFooter, ButtonGroup // 추가된 임포트
 } from '@chakra-ui/react';
+
+// 추천 해몽 예시 데이터
+const exampleItems = [
+    { id: 1, title: '오늘의 해몽', description: '매일 업데이트되는 인기 해몽 풀이', image: '/src/assets/cha_v2_nobg.png' },
+    { id: 2, title: '애정운 상담', description: '꿈으로 알아보는 나의 연애/결혼운', image: '/src/assets/cha_v2_nobg.png' },
+    { id: 3, title: '재물운 분석', description: '대박 꿈? 쪽박 꿈? 돈과 관련된 꿈 분석', image: '/src/assets/cha_v2_nobg.png' },
+    { id: 4, title: '악몽/불길한 꿈 상담', description: '나쁜 꿈의 의미와 극복 방법 알아보기', image: '/src/assets/cha_v2_nobg.png' },
+];
 
 function DreamInterpreter() {
   const toast = useToast();
@@ -107,11 +116,30 @@ function DreamInterpreter() {
     setResultDreamContent('');
     setResultTitle('');
 
+    // <<--- 토큰 가져오기 --- >>
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+        // 혹시 모를 상황 대비: 토큰이 없다면 다시 로그인 필요 알림
+        toast({ title: "인증 오류", description: "로그인 정보가 없습니다. 다시 로그인해주세요.", status: "error", duration: 3000 });
+        setLoading(false);
+        setStep(2); // 또는 로그인 페이지로 리디렉션
+        return;
+    }
+    // <<-------------------- >>
+
     try {
-      const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/dreams`, {
-        title: title.trim(),
-        dream_content: dreamContent
-      });
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_BASE_URL}/api/dreams`,
+        { // 요청 본문
+          title: title.trim(),
+          dream_content: dreamContent
+        },
+        { // <<--- 요청 설정 객체 (헤더 포함) --- >>
+          headers: {
+            'Authorization': `Bearer ${token}` // 여기에 토큰 추가!
+          }
+        } // <<--------------------------------- >>
+      );
 
       const rawInterpretation = response.data.dream.interpretation;
 
@@ -129,9 +157,12 @@ function DreamInterpreter() {
 
     } catch (error) {
        console.error('꿈 해몽 오류:', error);
-       const errorMsg = error.response?.data?.message || '꿈 해몽 중 오류가 발생했습니다.';
+       // 401 Unauthorized 오류인지 구체적으로 확인하는 로직 추가 가능
+       const errorMsg = error.response?.status === 401
+         ? "인증 토큰이 유효하지 않거나 만료되었습니다. 다시 로그인해주세요."
+         : error.response?.data?.message || '꿈 해몽 중 오류가 발생했습니다.';
        toast({ title: "해몽 실패", description: errorMsg, status: "error", duration: 3000 });
-       setStep(2); // 오류 발생 시 내용 입력 단계로 복귀
+       setStep(2);
     } finally {
       setLoading(false);
     }
@@ -212,7 +243,9 @@ function DreamInterpreter() {
              </FormControl>
              <Flex justify="space-between"> {/* 이전/다음 버튼 배치 */}
                 <Button variant="outline" onClick={handlePrevStep}>이전 (제목 수정)</Button>
-                <Button colorScheme="teal" onClick={handleSubmitDream} isDisabled={!dreamContent.trim()}>
+                <Button colorScheme="teal" onClick={handleSubmitDream} isDisabled={!dreamContent.trim()}
+                        isLoading={loading} // 로딩 상태 연동
+                        loadingText="해몽 중..."> {/* 로딩 텍스트 */}
                   해몽 요청하기
                 </Button>
              </Flex>
@@ -287,10 +320,64 @@ function DreamInterpreter() {
   // --------------------------------------------
 
   return (
-    // 전체 컴포넌트 중앙 정렬 및 최대 너비 설정 (패딩 제거)
-    <Box maxWidth="700px" mx="auto">
-        {renderStepContent()}
-    </Box>
+    // Box 제거하고 VStack으로 변경 (Layout의 Container가 중앙 정렬 담당)
+    <VStack spacing={8} align="stretch" w="100%"> {/* 너비 100% */}
+      <Heading as="h1" size="xl" textAlign="center" color="teal.600" mb={4}>
+        AI 꿈 해몽하기
+      </Heading>
+      {renderStepContent()}
+
+      {/* --- 추천 서비스/콘텐츠 섹션 --- */}
+      <Box mt={10}> {/* 위쪽 여백 추가 */}
+        <Heading size="md" mb={4} borderBottomWidth="1px" pb={2}> {/* 크기 및 스타일 조정 */}
+           추천 해몽
+        </Heading>
+        <SimpleGrid columns={{ base: 1, sm: 2, md: 2, lg: 4 }} spacing={5}> {/* 컬럼 수 조정 */}
+          {exampleItems.map((item) => (
+            <Card
+              key={item.id}
+              borderWidth="1px"
+              borderRadius="md" // 테두리 변경
+              overflow="hidden"
+              transition="all 0.2s ease-in-out"
+              _hover={{
+                transform: 'translateY(-3px)', // 호버 효과 약간 조정
+                boxShadow: 'md', // 그림자 약간 조정
+              }}
+              size="sm" // 카드 크기 조정
+            >
+              <Image
+                objectFit='cover'
+                width="100%"
+                maxH={{ base: "100px", md: "120px" }} // 이미지 높이 조정
+                src={item.image}
+                alt={item.title}
+                borderTopRadius="md" // 테두리 변경
+              />
+              <CardBody py={3} px={3}> {/* 패딩 조정 */}
+                <Stack spacing='1'> {/* 스택 간격 조정 */}
+                  <Heading size='xs' noOfLines={1}>{item.title}</Heading> {/* 제목 크기 조정 */}
+                  <Text fontSize="2xs" color="gray.600" noOfLines={2} minHeight="2.2em"> {/* 설명 폰트/높이 조정 */}
+                    {item.description}
+                  </Text>
+                </Stack>
+              </CardBody>
+              <Divider />
+              <CardFooter py={1.5} px={3} justify="flex-end"> {/* 푸터 패딩 조정 */}
+                <ButtonGroup spacing='1'> {/* 버튼 그룹 간격 조정 */}
+                  <Button variant='solid' colorScheme='teal' size="xs">
+                    자세히 보기
+                  </Button>
+                  <Button variant='ghost' colorScheme='teal' size="xs">
+                    스크랩
+                  </Button>
+                </ButtonGroup>
+              </CardFooter>
+            </Card>
+          ))}
+        </SimpleGrid>
+      </Box>
+    </VStack>
   );
 }
 

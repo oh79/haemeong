@@ -7,6 +7,8 @@ services:
       dockerfile: Dockerfile
     ports:
       - "3000:3000"
+    networks:
+      - shared_net
     # 로컬 폴더 바인드 (개발 편의)
     # node_modules 충돌 방지를 위해 아래처럼 마운트
     volumes:
@@ -22,10 +24,14 @@ services:
       dockerfile: Dockerfile
     ports:
       - "5000:5000"
+    networks:
+      - backend
+      - shared_net
+    depends_on:
+      mysql:
+        condition: service_healthy
     volumes:
-      - ./backend:/app
-      - /app/node_modules
-    # DB 연결 정보, API 키 등은 .env 파일에
+      - backend-uploads:/app/uploads
     env_file:
       - ./backend/.env
     environment:
@@ -34,12 +40,20 @@ services:
 
   mysql:
     image: mysql:8.0
-    ports:
-      - "3307:3306"
+    # ports:
+      # - "3307:3306" #TODO: 배포 시에 삭제
+    networks:
+      - backend
     env_file:
       - ./backend/.env
     volumes:
       - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost", "-P", "3306", "-uroot", "-p${DB_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 volumes:
   mysql-data:
+  backend-uploads:
